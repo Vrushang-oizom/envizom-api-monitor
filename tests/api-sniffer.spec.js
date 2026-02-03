@@ -99,3 +99,4 @@ ${rows}
 
   console.log(`✅ Captured ${capturedApis.length} APIs`);
 });
+

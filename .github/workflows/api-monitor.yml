@@ -1,15 +1,15 @@
 name: Envizom API Monitor
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "0 */2 * * *"
+    - cron: "0 */2 * * *"   # every 2 hours
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  run-monitor:
+  monitor:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,15 +25,18 @@ jobs:
         run: npm install
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install chromium
 
       - name: Run API sniffer
         run: npx playwright test
+        env:
+          ENVIZOM_EMAIL: ${{ secrets.ENVIZOM_EMAIL }}
+          ENVIZOM_PASSWORD: ${{ secrets.ENVIZOM_PASSWORD }}
 
       - name: Commit updated report
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add docs
+          git add docs/
           git commit -m "Update API report" || echo "No changes"
           git push

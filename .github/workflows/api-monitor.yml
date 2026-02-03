@@ -2,18 +2,22 @@ name: Envizom API Monitor
 
 on:
   schedule:
-    - cron: "0 */2 * * *"   # every 2 hours
+    - cron: "0 */2 * * *"
   workflow_dispatch:
 
 jobs:
-  run-monitor:
+  run:
     runs-on: ubuntu-latest
+
+    env:
+      ENVIZOM_EMAIL: ${{ secrets.ENVIZOM_EMAIL }}
+      ENVIZOM_PASSWORD: ${{ secrets.ENVIZOM_PASSWORD }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -21,11 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # 🔥 THIS IS THE MISSING STEP 🔥
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run API Sniffer
+      - name: Run API sniffer
         run: npx playwright test
 
       - name: Commit updated report
@@ -33,5 +36,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add docs
-          git commit -m "Update API health report" || echo "No changes"
+          git commit -m "Update API report" || echo "No changes"
           git push

@@ -6,28 +6,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  run-monitor:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - name: Run API sniffer
-        env:
-          ENVIZOM_EMAIL: ${{ secrets.ENVIZOM_EMAIL }}
-          ENVIZOM_PASSWORD: ${{ secrets.ENVIZOM_PASSWORD }}
+      # 🔥 THIS IS THE MISSING STEP 🔥
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run API Sniffer
         run: npx playwright test
 
       - name: Commit updated report
         run: |
-          git config user.name "api-monitor-bot"
-          git config user.email "bot@envizom"
-          git add docs/
-          git commit -m "Update API report" || echo "No changes"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add docs
+          git commit -m "Update API health report" || echo "No changes"
           git push

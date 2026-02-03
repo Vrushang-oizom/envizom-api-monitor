@@ -6,3 +6,4 @@ module.exports = defineConfig({
     headless: true   // REQUIRED for GitHub Actions
   }
 });
+

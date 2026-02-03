@@ -1,15 +1,15 @@
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-    timeout: 120000, // 2 minutes per test
+  testDir: './tests',
+  timeout: 60000,
 
-    use: {
-        headless: false,      // 👀 SEE THE BROWSER
-        slowMo: 500,          // 🐢 Slow down actions
-        viewport: null,
-        screenshot: 'only-on-failure',
-        video: 'retain-on-failure'
-    },
+  use: {
+    browserName: 'chromium',
+    headless: true,           // 🔥 REQUIRED for GitHub Actions
+    viewport: { width: 1280, height: 720 },
+    ignoreHTTPSErrors: true,
+  },
 
-    reporter: [['list'], ['html']]
+  workers: 1,                // safer for monitoring
 });

@@ -1,11 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
   <title>Envizom API Monitor</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .ok { color: green; }
+    .fail { color: red; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+  </style>
 </head>
 <body>
-  <h1>Envizom API Monitor</h1>
-  <p>If you see this page, GitHub Pages is working ✅</p>
+
+<h1>Envizom API Monitor</h1>
+<p id="meta"></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>URL</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<script>
+fetch('apis.json')
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('meta').innerText =
+      `Last Run: ${data.lastRun} | APIs: ${data.totalApis}`;
+
+    const rows = document.getElementById('rows');
+
+    data.apis.forEach(api => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${api.method}</td>
+        <td>${api.url}</td>
+        <td class="${api.ok ? 'ok' : 'fail'}">
+          ${api.status}
+        </td>
+      `;
+      rows.appendChild(tr);
+    });
+  });
+</script>
+
 </body>
 </html>

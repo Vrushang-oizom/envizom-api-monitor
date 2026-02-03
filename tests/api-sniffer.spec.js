@@ -119,6 +119,36 @@ test('Envizom API Sniffer → HTML Report', async ({ page }) => {
     fs.writeFileSync(reportPath, html);
     console.log(`✅ API report generated: ${reportPath}`);
 });
+const fs = require('fs');
+const path = require('path');
+
+// ===============================
+// SAVE API DATA TO JSON FILE
+// ===============================
+const outputDir = path.join(__dirname, '../discovered-apis');
+
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir);
+}
+
+const outputFile = path.join(outputDir, 'apis.json');
+
+fs.writeFileSync(
+  outputFile,
+  JSON.stringify(
+    capturedApis.map(api => ({
+      method: api.method,
+      url: api.url,
+      status: api.status,
+      time: new Date().toISOString()
+    })),
+    null,
+    2
+  )
+);
+
+console.log(`✅ Saved ${capturedApis.length} APIs to discovered-apis/apis.json`);
+
 
 
 

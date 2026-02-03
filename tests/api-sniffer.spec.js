@@ -64,7 +64,7 @@ test('Envizom API Sniffer → HTML Report', async ({ page }) => {
     /* ==============================
        4️⃣ GENERATE HTML REPORT
     ============================== */
-    const reportDir = path.join(__dirname, '../reports');
+    const reportDir = path.join(__dirname, '../docs');
     if (!fs.existsSync(reportDir)) fs.mkdirSync(reportDir);
 
     const reportPath = path.join(reportDir, 'api-report.html');
@@ -118,4 +118,5 @@ test('Envizom API Sniffer → HTML Report', async ({ page }) => {
     fs.writeFileSync(reportPath, html);
     console.log(`✅ API report generated: ${reportPath}`);
 });
+
 

@@ -1,0 +1,36 @@
+name: Envizom API Monitor
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'   # every 2 hours
+  workflow_dispatch:
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run API Sniffer
+        run: npx playwright test tests/api-sniffer.spec.js
+
+      - name: Publish HTML Report
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add reports/api-report.html
+          git commit -m "Update API report"
+          git push

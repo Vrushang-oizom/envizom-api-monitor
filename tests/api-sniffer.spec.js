@@ -32,8 +32,11 @@ test('Envizom API Sniffer → HTML Report', async ({ page }) => {
         timeout: 60000
     });
 
-    await page.getByPlaceholder(/email/i).fill('webqc@oizom.com');
-    await page.getByPlaceholder(/password/i).fill('Oizom@123');
+    await page.getByPlaceholder(/email/i)
+  .fill(process.env.ENVIZOM_EMAIL);
+
+    await page.getByPlaceholder(/password/i)
+  .fill(process.env.ENVIZOM_PASSWORD);
 
     await page.locator('mat-checkbox').click({ force: true });
     await page.getByRole('button', { name: /agree/i }).click();
@@ -115,3 +118,4 @@ test('Envizom API Sniffer → HTML Report', async ({ page }) => {
     fs.writeFileSync(reportPath, html);
     console.log(`✅ API report generated: ${reportPath}`);
 });
+

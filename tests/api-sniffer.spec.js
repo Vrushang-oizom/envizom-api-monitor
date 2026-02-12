@@ -2,35 +2,37 @@ const { test } = require('@playwright/test');
 const fs = require('fs');
 
 test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) => {
-  test.setTimeout(240000);
 
-  /* =========================
-     API GROUP STORAGE
-  ========================= */
-
-  let currentPhase = "login";
   const loginApis = [];
   const aqiApis = [];
 
+  let phase = "login"; // login → aqi
+
+  /* =========================
+     CAPTURE ALL API CALLS
+  ========================= */
   page.on('response', async (response) => {
     const url = response.url();
-    if (!url.includes('envdevapi.oizom.com')) return;
 
-    const api = {
-      time: new Date().toLocaleString(),
-      method: response.request().method(),
-      status: response.status(),
-      url
-    };
+    if (url.includes('envdevapi.oizom.com')) {
+      const apiData = {
+        time: new Date().toLocaleString(),
+        method: response.request().method(),
+        status: response.status(),
+        url
+      };
 
-    if (currentPhase === "login") loginApis.push(api);
-    if (currentPhase === "aqi") aqiApis.push(api);
+      if (phase === "login") {
+        loginApis.push(apiData);
+      } else {
+        aqiApis.push(apiData);
+      }
+    }
   });
 
   /* =========================
      LOGIN
   ========================= */
-
   await page.goto('https://devenvizom.oizom.com/#/login');
 
   await page.getByPlaceholder(/email/i)
@@ -41,12 +43,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
 
   await page.locator('mat-checkbox').click({ force: true });
 
-  const agreeBtn = page.getByRole('button', { name: /agree/i });
-  if (await agreeBtn.isVisible().catch(() => false)) {
-    await agreeBtn.click();
-  }
-
-  const loginBtn = page.locator('button:has-text("LOG IN")');
+  await page.getByRole('button', { name: /agree/i }).click();
 
   await page.waitForFunction(() => {
     const btn = [...document.querySelectorAll('button')]
@@ -54,87 +51,146 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
     return btn && !btn.disabled;
   });
 
-  await loginBtn.click();
+  await page.getByRole('button', { name: /log in/i }).click();
 
-  // Wait for overview map to load
-  await page.waitForURL(/overview\/map/, { timeout: 60000 });
-
-  // Capture login APIs
+  /* =========================
+     WAIT FOR OVERVIEW MAP
+  ========================= */
+  await page.waitForURL(/overview\/map/, { timeout: 90000 });
   await page.waitForTimeout(8000);
 
   /* =========================
      OPEN AQI VIEW
   ========================= */
-
-  // Click AQI toggle
-  await page.locator('text=AQI View').first().click();
-
-  // Wait until URL changes
-  await page.waitForURL(/overview\/aqi/, { timeout: 60000 });
-
-  // Let AQI screen fully render
-  await page.waitForTimeout(7000);
+  await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
+  await page.waitForTimeout(8000);
 
   /* =========================
-     CLICK APPLY
-     (THIS IS WHERE AQI APIs FIRE)
+     SELECT DEVICE TYPE
   ========================= */
+  const deviceType = page.locator('input[formcontrolname="deviceType"]');
+  await deviceType.waitFor({ timeout: 60000 });
 
-  // Switch capture phase BEFORE apply
-  currentPhase = "aqi";
+  await deviceType.click();
+  await page.waitForTimeout(2000);
 
-  const applyBtn = page.getByRole('button', { name: /apply/i });
-  if (await applyBtn.isVisible().catch(() => false)) {
-    await applyBtn.click();
-  }
-
-  // Capture AQI APIs
-  await page.waitForTimeout(10000);
+  await page.locator('mat-option').first().click();
 
   /* =========================
-     GENERATE REPORT
+     ENTER TODAY DATE
+  ========================= */
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yy = String(today.getFullYear()).slice(-2);
+
+  const dateStr = `${dd}/${mm}/${yy}`;
+
+  const dateInput = page.locator('input[formcontrolname="startDate"]');
+  await dateInput.fill(dateStr);
+  await page.keyboard.press('Enter');
+
+  /* =========================
+     OPEN TIME PICKER
+  ========================= */
+  const clockIcon = page.locator('mat-icon', { hasText: 'schedule' }).first();
+  await clockIcon.click({ force: true });
+
+  await page.waitForSelector('.timepicker', { timeout: 60000 });
+
+  /* =========================
+     SELECT PREVIOUS HOUR
+  ========================= */
+  const hour = new Date().getHours();
+  let prevHour = hour === 0 ? 12 : hour - 1;
+
+  if (prevHour > 12) prevHour -= 12;
+  if (prevHour === 0) prevHour = 12;
+
+  const hourText = String(prevHour);
+
+  await page.locator('.clock-face__number span')
+    .filter({ hasText: hourText })
+    .first()
+    .click();
+
+  await page.waitForTimeout(1500);
+
+  await page.locator('button.timepicker-button:has-text("Ok")').click();
+
+  /* =========================
+     SWITCH PHASE TO AQI
+  ========================= */
+await page.getByRole('button', { name: /apply/i }).click();
+
+// 🔴 VERY IMPORTANT: switch AFTER APPLY
+phase = "aqi";
+
+// Clear previous auto-load noise
+await page.waitForTimeout(3000);
+
+  /* =========================
+     WAIT FOR AQI APIs
+  ========================= */
+  await page.waitForTimeout(15000);
+
+  /* =========================
+     GENERATE HTML REPORT
   ========================= */
 
-  function buildTable(title, data) {
-    return `
-      <h2 style="margin-top:30px;">${title} (${data.length})</h2>
-      <table border="1" cellspacing="0" cellpadding="6" style="width:100%">
-        <tr style="background:#111;color:#fff">
-          <th>Time</th>
-          <th>Status</th>
-          <th>Method</th>
-          <th>URL</th>
-        </tr>
-        ${data.map(api => `
-          <tr style="background:${api.status === 200 ? '#e8f5e9' : '#ffebee'}">
-            <td>${api.time}</td>
-            <td>${api.status}</td>
-            <td>${api.method}</td>
-            <td>${api.url}</td>
-          </tr>
-        `).join("")}
-      </table>
-    `;
-  }
+  const buildTable = (title, data) => {
+    let html = `<h2>${title}</h2>
+    <table>
+      <tr>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Method</th>
+        <th>URL</th>
+      </tr>`;
+
+    data.forEach(api => {
+      html += `
+        <tr class="${api.status === 200 ? 'ok' : 'fail'}">
+          <td>${api.time}</td>
+          <td>${api.status}</td>
+          <td>${api.method}</td>
+          <td>${api.url}</td>
+        </tr>`;
+    });
+
+    html += `</table><br/>`;
+    return html;
+  };
 
   const html = `
   <html>
   <head>
     <title>Envizom API Monitor</title>
+    <style>
+      body { font-family: Arial; padding: 20px; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #ddd; padding: 8px; font-size: 13px; }
+      th { background: #333; color: #fff; }
+      .ok { background: #d4edda; }
+      .fail { background: #f8d7da; }
+    </style>
   </head>
-  <body style="font-family:Arial;padding:20px;">
-  
-    <h1>Envizom API Monitor</h1>
+  <body>
+
+    <h1>Envizom API Health Report</h1>
     <p><b>Last Run:</b> ${new Date().toLocaleString()}</p>
-  
-    ${buildTable("🔐 LOGIN APIs", loginApis)}
-    ${buildTable("🌫 OVERVIEW AQI MODULE APIs", aqiApis)}
-  
+
+    ${buildTable("🔐 Login + Overview APIs", loginApis)}
+
+    ${buildTable("🌫 AQI Module APIs", aqiApis)}
+
   </body>
   </html>
   `;
 
   fs.writeFileSync('docs/index.html', html);
 
-  console.log("✅ API report generated");
+  console.log("Login APIs:", loginApis.length);
+  console.log("AQI APIs:", aqiApis.length);
+  console.log("✅ HTML report updated");
 });

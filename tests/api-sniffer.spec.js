@@ -6,34 +6,43 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   const loginApis = [];
   const aqiApis = [];
 
-  let phase = "login"; // login → aqi
+  let phase = "login";
 
   /* =========================
-     CAPTURE ALL API CALLS
+     CAPTURE IMPORTANT APIs ONLY
   ========================= */
   page.on('response', async (response) => {
     const url = response.url();
 
-    if (url.includes('envdevapi.oizom.com')) {
-      const apiData = {
-        time: new Date().toLocaleTimeString('en-IN', {
-  timeZone: 'Asia/Kolkata',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit'
-}),
+    const important =
+      url.includes('/login') ||
+      url.includes('/overview') ||
+      url.includes('/devices/data') ||
+      url.includes('/real-time');
 
-        method: response.request().method(),
-        status: response.status(),
-        url
-      };
+    if (!important) return;
 
-      if (phase === "login") {
-        loginApis.push(apiData);
-      } else {
-        aqiApis.push(apiData);
-      }
+    let body = "";
+
+    try {
+      const text = await response.text();
+      body = text.substring(0, 800); // limit size
+    } catch {
+      body = "No response body";
     }
+
+    const apiData = {
+      time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      method: response.request().method(),
+      status: response.status(),
+      url,
+      data: body
+    };
+
+    if (phase === "login")
+      loginApis.push(apiData);
+    else
+      aqiApis.push(apiData);
   });
 
   /* =========================
@@ -58,14 +67,11 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
 
   await page.getByRole('button', { name: /log in/i }).click();
 
-  /* =========================
-     WAIT FOR OVERVIEW MAP
-  ========================= */
   await page.waitForURL(/overview\/map/, { timeout: 90000 });
   await page.waitForTimeout(8000);
 
   /* =========================
-     OPEN AQI VIEW DIRECTLY
+     GO TO AQI PAGE
   ========================= */
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
   await page.waitForTimeout(8000);
@@ -78,29 +84,34 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
 
   await deviceType.click();
   await page.waitForTimeout(2000);
-
   await page.locator('mat-option').first().click();
 
   /* =========================
-     SKIP DATE & TIME
-     (Use default values already filled)
+     ENTER TODAY DATE
   ========================= */
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yy = String(today.getFullYear()).slice(-2);
+
+  const dateStr = `${dd}/${mm}/${yy}`;
+
+  const dateInput = page.locator('input[formcontrolname="startDate"]');
+  await dateInput.fill(dateStr);
+  await page.keyboard.press('Enter');
 
   /* =========================
-     CLICK APPLY
+     APPLY (NO TIME SELECTION)
   ========================= */
   await page.getByRole('button', { name: /apply/i }).click();
 
-  // 🔴 SWITCH PHASE AFTER APPLY
   phase = "aqi";
 
-  // Let AQI APIs fire
   await page.waitForTimeout(15000);
 
   /* =========================
-     GENERATE HTML REPORT
+     BUILD HTML REPORT
   ========================= */
-
   const buildTable = (title, data) => {
     let html = `<h2>${title}</h2>
     <table>
@@ -109,6 +120,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
         <th>Status</th>
         <th>Method</th>
         <th>URL</th>
+        <th>Response (JSON)</th>
       </tr>`;
 
     data.forEach(api => {
@@ -118,6 +130,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
           <td>${api.status}</td>
           <td>${api.method}</td>
           <td>${api.url}</td>
+          <td><pre>${api.data}</pre></td>
         </tr>`;
     });
 
@@ -132,20 +145,21 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
     <style>
       body { font-family: Arial; padding: 20px; }
       table { border-collapse: collapse; width: 100%; }
-      th, td { border: 1px solid #ddd; padding: 8px; font-size: 13px; }
+      th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
       th { background: #333; color: #fff; }
       .ok { background: #d4edda; }
       .fail { background: #f8d7da; }
+      pre { white-space: pre-wrap; max-height: 200px; overflow:auto; }
     </style>
   </head>
   <body>
 
     <h1>Envizom API Health Report</h1>
-    <p><b>Last Run:</b> ${new Date().toLocaleString()}</p>
+    <p><b>Last Run:</b> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
 
-    ${buildTable("🔐 Login + Overview APIs", loginApis)}
+    ${buildTable("🔐 LOGIN APIs", loginApis)}
 
-    ${buildTable("🌫 Overview AQI Module APIs", aqiApis)}
+    ${buildTable("🌫 OVERVIEW AQI MODULE APIs", aqiApis)}
 
   </body>
   </html>
@@ -157,4 +171,3 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   console.log("AQI APIs:", aqiApis.length);
   console.log("✅ HTML report updated");
 });
-

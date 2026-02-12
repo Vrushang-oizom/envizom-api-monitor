@@ -42,7 +42,6 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
     .fill(process.env.ENVIZOM_PASSWORD);
 
   await page.locator('mat-checkbox').click({ force: true });
-
   await page.getByRole('button', { name: /agree/i }).click();
 
   await page.waitForFunction(() => {
@@ -60,7 +59,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await page.waitForTimeout(8000);
 
   /* =========================
-     OPEN AQI VIEW
+     OPEN AQI VIEW DIRECTLY
   ========================= */
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
   await page.waitForTimeout(8000);
@@ -77,61 +76,19 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await page.locator('mat-option').first().click();
 
   /* =========================
-     ENTER TODAY DATE
+     SKIP DATE & TIME
+     (Use default values already filled)
   ========================= */
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const yy = String(today.getFullYear()).slice(-2);
-
-  const dateStr = `${dd}/${mm}/${yy}`;
-
-  const dateInput = page.locator('input[formcontrolname="startDate"]');
-  await dateInput.fill(dateStr);
-  await page.keyboard.press('Enter');
 
   /* =========================
-     OPEN TIME PICKER
+     CLICK APPLY
   ========================= */
-  const clockIcon = page.locator('mat-icon', { hasText: 'schedule' }).first();
-  await clockIcon.click({ force: true });
+  await page.getByRole('button', { name: /apply/i }).click();
 
-  await page.waitForSelector('.timepicker', { timeout: 60000 });
+  // 🔴 SWITCH PHASE AFTER APPLY
+  phase = "aqi";
 
-  /* =========================
-     SELECT PREVIOUS HOUR
-  ========================= */
-  const hour = new Date().getHours();
-  let prevHour = hour === 0 ? 12 : hour - 1;
-
-  if (prevHour > 12) prevHour -= 12;
-  if (prevHour === 0) prevHour = 12;
-
-  const hourText = String(prevHour);
-
-  await page.locator('.clock-face__number span')
-    .filter({ hasText: hourText })
-    .first()
-    .click();
-
-  await page.waitForTimeout(1500);
-
-  await page.locator('button.timepicker-button:has-text("Ok")').click();
-
-  /* =========================
-     SWITCH PHASE TO AQI
-  ========================= */
-await page.getByRole('button', { name: /apply/i }).click();
-
-// 🔴 VERY IMPORTANT: switch AFTER APPLY
-phase = "aqi";
-
-// Clear previous auto-load noise
-await page.waitForTimeout(3000);
-
-  /* =========================
-     WAIT FOR AQI APIs
-  ========================= */
+  // Let AQI APIs fire
   await page.waitForTimeout(15000);
 
   /* =========================
@@ -182,7 +139,7 @@ await page.waitForTimeout(3000);
 
     ${buildTable("🔐 Login + Overview APIs", loginApis)}
 
-    ${buildTable("🌫 AQI Module APIs", aqiApis)}
+    ${buildTable("🌫 Overview AQI Module APIs", aqiApis)}
 
   </body>
   </html>

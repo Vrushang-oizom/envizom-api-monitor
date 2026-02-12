@@ -1,50 +1,44 @@
 const { test } = require('@playwright/test');
 const fs = require('fs');
+const path = require('path');
 
 test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) => {
   test.setTimeout(240000);
 
-  /* =========================
-     API GROUP STORAGE
-  ========================= */
-
-  let currentPhase = "login";
   const loginApis = [];
   const aqiApis = [];
 
+  let phase = 'login';
+
+  /* =========================
+     CAPTURE ALL NETWORK CALLS
+  ========================= */
   page.on('response', async (response) => {
     const url = response.url();
+
     if (!url.includes('envdevapi.oizom.com')) return;
 
-    const api = {
-      time: new Date().toLocaleString(),
+    const data = {
+      url,
       method: response.request().method(),
       status: response.status(),
-      url
+      time: new Date().toLocaleTimeString()
     };
 
-    if (currentPhase === "login") loginApis.push(api);
-    if (currentPhase === "aqi") aqiApis.push(api);
+    if (phase === 'login') loginApis.push(data);
+    else if (phase === 'aqi') aqiApis.push(data);
   });
 
   /* =========================
-     LOGIN
+     1️⃣ OPEN LOGIN PAGE
   ========================= */
-
   await page.goto('https://devenvizom.oizom.com/#/login');
 
-  await page.getByPlaceholder(/email/i)
-    .fill(process.env.ENVIZOM_EMAIL);
-
-  await page.getByPlaceholder(/password/i)
-    .fill(process.env.ENVIZOM_PASSWORD);
+  await page.getByPlaceholder(/email/i).fill(process.env.ENVIZOM_EMAIL);
+  await page.getByPlaceholder(/password/i).fill(process.env.ENVIZOM_PASSWORD);
 
   await page.locator('mat-checkbox').click({ force: true });
-
-  const agreeBtn = page.getByRole('button', { name: /agree/i });
-  if (await agreeBtn.isVisible().catch(() => false)) {
-    await agreeBtn.click();
-  }
+  await page.getByRole('button', { name: /agree/i }).click();
 
   const loginBtn = page.locator('button:has-text("LOG IN")');
 
@@ -56,85 +50,133 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
 
   await loginBtn.click();
 
-  // Wait for overview map to load
+  /* =========================
+     2️⃣ WAIT FOR MAP PAGE
+  ========================= */
   await page.waitForURL(/overview\/map/, { timeout: 60000 });
-
-  // Capture login APIs
   await page.waitForTimeout(8000);
 
   /* =========================
-     OPEN AQI VIEW
+     3️⃣ CLOSE POPUPS / OVERLAYS
   ========================= */
 
-  // Click AQI toggle
-  await page.locator('text=AQI View').first().click();
-
-  // Wait until URL changes
-  await page.waitForURL(/overview\/aqi/, { timeout: 60000 });
-
-  // Let AQI screen fully render
-  await page.waitForTimeout(7000);
-
-  /* =========================
-     CLICK APPLY
-     (THIS IS WHERE AQI APIs FIRE)
-  ========================= */
-
-  // Switch capture phase BEFORE apply
-  currentPhase = "aqi";
-
-  const applyBtn = page.getByRole('button', { name: /apply/i });
-  if (await applyBtn.isVisible().catch(() => false)) {
-    await applyBtn.click();
+  // Close any close icon popup
+  const closeIcons = page.locator('mat-icon:has-text("close")');
+  if (await closeIcons.count() > 0) {
+    await closeIcons.first().click({ force: true });
+    await page.waitForTimeout(2000);
   }
 
-  // Capture AQI APIs
+  // Remove dark overlay if present
+  const backdrop = page.locator('.cdk-overlay-backdrop');
+  if (await backdrop.isVisible().catch(() => false)) {
+    await backdrop.click({ force: true });
+    await page.waitForTimeout(2000);
+  }
+
+  /* =========================
+     SWITCH TO AQI CAPTURE MODE
+  ========================= */
+  phase = 'aqi';
+
+  /* =========================
+     4️⃣ CLICK AQI VIEW
+  ========================= */
+  await page.locator('mat-button-toggle:has-text("AQI View") button')
+    .click({ force: true });
+
+  await page.waitForURL(/overview\/aqi/, { timeout: 60000 });
+  await page.waitForTimeout(6000);
+
+  /* =========================
+     5️⃣ SELECT DEVICE TYPE
+  ========================= */
+  const deviceType = page.locator('input[placeholder="Device Type"]');
+
+  await deviceType.click({ force: true });
+  await page.waitForTimeout(2000);
+
+  const firstOption = page.locator('mat-option').first();
+  await firstOption.click({ force: true });
+
+  /* =========================
+     6️⃣ SELECT TODAY DATE
+  ========================= */
+  await page.locator('input[formcontrolname="startDate"]').click({ force: true });
+  await page.waitForTimeout(2000);
+
+  // Click last date cell (today)
+  await page.locator('.mat-calendar-body-cell-content').last().click();
+
+  /* =========================
+     7️⃣ SELECT TIME (PREVIOUS HOUR)
+  ========================= */
+  const timeInput = page.locator('input[formcontrolname="selectedTime"]');
+  await timeInput.click({ force: true });
+
+  await page.waitForTimeout(3000);
+
+  const hour = new Date().getHours();
+  let prevHour = hour - 1;
+  if (prevHour <= 0) prevHour = 12;
+  if (prevHour > 12) prevHour -= 12;
+
+  await page.locator('.clock-face__number span', {
+    hasText: prevHour.toString()
+  }).click({ force: true });
+
+  await page.locator('button:has-text("Ok")').click({ force: true });
+
+  /* =========================
+     8️⃣ CLICK APPLY
+  ========================= */
+  await page.getByRole('button', { name: /apply/i }).click({ force: true });
+
   await page.waitForTimeout(10000);
 
   /* =========================
-     GENERATE REPORT
+     9️⃣ GENERATE HTML REPORT
   ========================= */
 
-  function buildTable(title, data) {
-    return `
-      <h2 style="margin-top:30px;">${title} (${data.length})</h2>
-      <table border="1" cellspacing="0" cellpadding="6" style="width:100%">
-        <tr style="background:#111;color:#fff">
-          <th>Time</th>
-          <th>Status</th>
-          <th>Method</th>
-          <th>URL</th>
-        </tr>
-        ${data.map(api => `
-          <tr style="background:${api.status === 200 ? '#e8f5e9' : '#ffebee'}">
-            <td>${api.time}</td>
-            <td>${api.status}</td>
-            <td>${api.method}</td>
-            <td>${api.url}</td>
-          </tr>
-        `).join("")}
-      </table>
-    `;
-  }
+  const reportPath = path.join(__dirname, '../reports/api-report.html');
 
-  const html = `
-  <html>
-  <head>
-    <title>Envizom API Monitor</title>
-  </head>
-  <body style="font-family:Arial;padding:20px;">
-  
-    <h1>Envizom API Monitor</h1>
-    <p><b>Last Run:</b> ${new Date().toLocaleString()}</p>
-  
-    ${buildTable("🔐 LOGIN APIs", loginApis)}
-    ${buildTable("🌫 OVERVIEW AQI MODULE APIs", aqiApis)}
-  
-  </body>
-  </html>
+  const buildTable = (title, list) => `
+    <h2>${title}</h2>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tr>
+        <th>URL</th>
+        <th>Method</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+      ${list.map(api => `
+        <tr style="background:${api.status === 200 ? '#d4edda' : '#f8d7da'}">
+          <td>${api.url}</td>
+          <td>${api.method}</td>
+          <td>${api.status}</td>
+          <td>${api.time}</td>
+        </tr>
+      `).join('')}
+    </table>
   `;
 
-  fs.writeFileSync('docs/index.html', html);
+  const html = `
+    <html>
+      <head>
+        <title>Envizom API Monitor</title>
+      </head>
+      <body style="font-family: Arial">
+        <h1>Envizom API Monitoring Report</h1>
+        <p>Generated at: ${new Date().toLocaleString()}</p>
 
-  console.log("✅ API report generated");
+        ${buildTable('LOGIN APIs', loginApis)}
+        <br/>
+        ${buildTable('OVERVIEW AQI MODULE APIs', aqiApis)}
+
+      </body>
+    </html>
+  `;
+
+  fs.writeFileSync(reportPath, html);
+  console.log('✅ API report generated:', reportPath);
 });

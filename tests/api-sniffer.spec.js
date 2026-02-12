@@ -50,7 +50,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await page.locator('button:has-text("LOG IN")').click();
 
   /* =========================
-     2️⃣ WAIT OVERVIEW LOAD
+     2️⃣ WAIT OVERVIEW MAP LOAD
   ========================= */
   await page.waitForURL(/overview\/map/, { timeout: 60000 });
   await page.waitForTimeout(8000);
@@ -65,9 +65,8 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   }
 
   /* =========================
-     4️⃣ CLICK AQI VIEW
+     4️⃣ CLICK AQI VIEW + WAIT REDIRECT
   ========================= */
-  await page.waitForSelector('mat-button-toggle', { timeout: 60000 });
 
   const aqiToggle = page.locator('mat-button-toggle')
     .filter({ hasText: 'AQI View' })
@@ -76,16 +75,21 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await aqiToggle.scrollIntoViewIfNeeded();
   await aqiToggle.click({ force: true });
 
-  await page.waitForTimeout(5000);
+  // 🔴 VERY IMPORTANT
+  await page.waitForURL(/overview\/aqi/, { timeout: 60000 });
+
+  // Give Angular time to render AQI form
+  await page.waitForTimeout(7000);
 
   /* =========================
      5️⃣ SELECT DEVICE TYPE
   ========================= */
-  await page.waitForSelector('input[formcontrolname="deviceType"]', {
+
+  await page.waitForSelector('input[placeholder="Device Type"]', {
     timeout: 60000
   });
 
-  const deviceTypeInput = page.locator('input[formcontrolname="deviceType"]').first();
+  const deviceTypeInput = page.locator('input[placeholder="Device Type"]').first();
 
   await deviceTypeInput.scrollIntoViewIfNeeded();
   await deviceTypeInput.click({ force: true });
@@ -98,18 +102,19 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   /* =========================
      6️⃣ SELECT TODAY DATE
   ========================= */
+
   const dateInput = page.locator('input[formcontrolname="startDate"]');
   await dateInput.click();
 
   await page.waitForTimeout(2000);
 
   await page.locator('.mat-calendar-body-today').click().catch(() => {});
-
   await page.waitForTimeout(2000);
 
   /* =========================
      7️⃣ SELECT PREVIOUS HOUR
   ========================= */
+
   const timeInput = page.locator('input[formcontrolname="selectedTime"]');
   await timeInput.click();
 
@@ -131,6 +136,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   /* =========================
      8️⃣ CLICK APPLY
   ========================= */
+
   await page.getByRole('button', { name: /apply/i }).click()
     .catch(async () => {
       await page.locator('button:has-text("Apply")').click();
@@ -139,11 +145,13 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   /* =========================
      9️⃣ WAIT FOR AQI APIs
   ========================= */
+
   await page.waitForTimeout(15000);
 
   /* =========================
      🔟 SAVE REPORT
   ========================= */
+
   const docsDir = path.join(process.cwd(), 'docs');
   if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir);
 

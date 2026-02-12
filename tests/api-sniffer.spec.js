@@ -2,25 +2,36 @@ const { test } = require('@playwright/test');
 const fs = require('fs');
 
 test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) => {
-  const apis = [];
+
+  const loginApis = [];
+  const aqiApis = [];
+
+  let phase = "login"; // login → aqi
 
   /* =========================
      CAPTURE ALL API CALLS
   ========================= */
   page.on('response', async (response) => {
     const url = response.url();
+
     if (url.includes('envdevapi.oizom.com')) {
-      apis.push({
+      const apiData = {
         time: new Date().toLocaleString(),
         method: response.request().method(),
         status: response.status(),
         url
-      });
+      };
+
+      if (phase === "login") {
+        loginApis.push(apiData);
+      } else {
+        aqiApis.push(apiData);
+      }
     }
   });
 
   /* =========================
-     1️⃣ LOGIN
+     LOGIN
   ========================= */
   await page.goto('https://devenvizom.oizom.com/#/login');
 
@@ -43,19 +54,19 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await page.getByRole('button', { name: /log in/i }).click();
 
   /* =========================
-     2️⃣ WAIT FOR OVERVIEW MAP
+     WAIT FOR OVERVIEW MAP
   ========================= */
   await page.waitForURL(/overview\/map/, { timeout: 90000 });
-  await page.waitForTimeout(6000);
+  await page.waitForTimeout(8000);
 
   /* =========================
-     3️⃣ OPEN AQI VIEW
+     OPEN AQI VIEW
   ========================= */
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
   await page.waitForTimeout(8000);
 
   /* =========================
-     4️⃣ SELECT DEVICE TYPE
+     SELECT DEVICE TYPE
   ========================= */
   const deviceType = page.locator('input[formcontrolname="deviceType"]');
   await deviceType.waitFor({ timeout: 60000 });
@@ -66,7 +77,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await page.locator('mat-option').first().click();
 
   /* =========================
-     5️⃣ ENTER TODAY DATE (DD/MM/YY)
+     ENTER TODAY DATE
   ========================= */
   const today = new Date();
   const dd = String(today.getDate()).padStart(2, '0');
@@ -79,23 +90,19 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await dateInput.fill(dateStr);
   await page.keyboard.press('Enter');
 
- /* =========================
-   OPEN TIME PICKER (CLICK ICON, NOT INPUT)
-========================= */
+  /* =========================
+     OPEN TIME PICKER
+  ========================= */
+  const clockIcon = page.locator('mat-icon', { hasText: 'schedule' }).first();
+  await clockIcon.click({ force: true });
 
-// Click the clock icon
-const clockIcon = page.locator('mat-icon', { hasText: 'schedule' }).first();
-await clockIcon.click({ force: true });
-
-// Now wait for picker to appear
-await page.waitForSelector('.timepicker', { timeout: 60000 });
-
+  await page.waitForSelector('.timepicker', { timeout: 60000 });
 
   /* =========================
-     7️⃣ SELECT PREVIOUS HOUR
+     SELECT PREVIOUS HOUR
   ========================= */
-  const currentHour = new Date().getHours();
-  let prevHour = currentHour === 0 ? 12 : currentHour - 1;
+  const hour = new Date().getHours();
+  let prevHour = hour === 0 ? 12 : hour - 1;
 
   if (prevHour > 12) prevHour -= 12;
   if (prevHour === 0) prevHour = 12;
@@ -109,25 +116,52 @@ await page.waitForSelector('.timepicker', { timeout: 60000 });
 
   await page.waitForTimeout(1500);
 
-  /* =========================
-     8️⃣ CLICK OK IN CLOCK
-  ========================= */
   await page.locator('button.timepicker-button:has-text("Ok")').click();
 
   /* =========================
-     9️⃣ CLICK APPLY
+     SWITCH PHASE TO AQI
+  ========================= */
+  phase = "aqi";
+
+  /* =========================
+     CLICK APPLY
   ========================= */
   await page.getByRole('button', { name: /apply/i }).click();
 
   /* =========================
-     🔟 WAIT FOR AQI APIs
+     WAIT FOR AQI APIs
   ========================= */
   await page.waitForTimeout(15000);
 
   /* =========================
-     1️⃣1️⃣ GENERATE HTML REPORT
+     GENERATE HTML REPORT
   ========================= */
-  let html = `
+
+  const buildTable = (title, data) => {
+    let html = `<h2>${title}</h2>
+    <table>
+      <tr>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Method</th>
+        <th>URL</th>
+      </tr>`;
+
+    data.forEach(api => {
+      html += `
+        <tr class="${api.status === 200 ? 'ok' : 'fail'}">
+          <td>${api.time}</td>
+          <td>${api.status}</td>
+          <td>${api.method}</td>
+          <td>${api.url}</td>
+        </tr>`;
+    });
+
+    html += `</table><br/>`;
+    return html;
+  };
+
+  const html = `
   <html>
   <head>
     <title>Envizom API Monitor</title>
@@ -141,36 +175,21 @@ await page.waitForSelector('.timepicker', { timeout: 60000 });
     </style>
   </head>
   <body>
-    <h2>Envizom API Monitor</h2>
+
+    <h1>Envizom API Health Report</h1>
     <p><b>Last Run:</b> ${new Date().toLocaleString()}</p>
-    <table>
-      <tr>
-        <th>Time</th>
-        <th>Status</th>
-        <th>Method</th>
-        <th>URL</th>
-      </tr>
-  `;
 
-  apis.forEach(api => {
-    html += `
-      <tr class="${api.status === 200 ? 'ok' : 'fail'}">
-        <td>${api.time}</td>
-        <td>${api.status}</td>
-        <td>${api.method}</td>
-        <td>${api.url}</td>
-      </tr>
-    `;
-  });
+    ${buildTable("🔐 Login + Overview APIs", loginApis)}
 
-  html += `
-    </table>
+    ${buildTable("🌫 AQI Module APIs", aqiApis)}
+
   </body>
   </html>
   `;
 
   fs.writeFileSync('docs/index.html', html);
 
-  console.log(`✅ API report generated with ${apis.length} APIs`);
+  console.log("Login APIs:", loginApis.length);
+  console.log("AQI APIs:", aqiApis.length);
+  console.log("✅ HTML report updated");
 });
-

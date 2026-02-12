@@ -11,7 +11,9 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   const capturedApis = [];
   const seen = new Set();
 
-  // Capture ALL API responses
+  /* =========================
+     CAPTURE ALL API CALLS
+  ========================= */
   page.on('response', response => {
     const url = response.url();
     if (url.includes('envdevapi.oizom.com')) {
@@ -31,7 +33,6 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   /* =========================
      1️⃣ LOGIN
   ========================= */
-
   await page.goto('https://devenvizom.oizom.com/#/login');
 
   await page.getByPlaceholder(/email/i).fill(process.env.ENVIZOM_EMAIL);
@@ -48,87 +49,93 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
 
   await page.locator('button:has-text("LOG IN")').click();
 
-  // wait dashboard load
-  await page.waitForTimeout(15000);
+  /* =========================
+     2️⃣ WAIT OVERVIEW LOAD
+  ========================= */
+  await page.waitForURL(/overview\/map/, { timeout: 60000 });
+  await page.waitForTimeout(8000);
 
   /* =========================
-     2️⃣ CLICK AQI VIEW
+     3️⃣ CLOSE POPUP IF PRESENT
   ========================= */
-
-  await page.getByRole('button', { name: /aqi view/i }).click();
-  await page.waitForTimeout(3000);
+  const popupClose = page.locator('mat-icon:has-text("close")').first();
+  if (await popupClose.isVisible().catch(() => false)) {
+    await popupClose.click({ force: true });
+    await page.waitForTimeout(2000);
+  }
 
   /* =========================
-     3️⃣ SELECT DEVICE TYPE
+     4️⃣ CLICK AQI VIEW
   ========================= */
+  await page.waitForSelector('mat-button-toggle', { timeout: 60000 });
 
+  const aqiToggle = page.locator('mat-button-toggle')
+    .filter({ hasText: 'AQI View' })
+    .first();
+
+  await aqiToggle.scrollIntoViewIfNeeded();
+  await aqiToggle.click({ force: true });
+
+  await page.waitForTimeout(4000);
+
+  /* =========================
+     5️⃣ SELECT DEVICE TYPE
+  ========================= */
   const deviceTypeInput = page.locator('input[placeholder="Device Type"]');
   await deviceTypeInput.click();
 
   const firstDeviceType = page.locator('mat-option').first();
   await firstDeviceType.click();
 
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(3000);
 
   /* =========================
-     4️⃣ SELECT TODAY DATE
+     6️⃣ SELECT TODAY DATE
   ========================= */
-
   const dateInput = page.locator('input[formcontrolname="startDate"]');
   await dateInput.click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
 
-  // Click today date automatically
   await page.locator('.mat-calendar-body-today').click().catch(() => {});
-
   await page.waitForTimeout(2000);
 
   /* =========================
-     5️⃣ OPEN TIME PICKER
+     7️⃣ SELECT PREVIOUS HOUR
   ========================= */
-
   const timeInput = page.locator('input[formcontrolname="selectedTime"]');
   await timeInput.click();
-
-  await page.waitForTimeout(2000);
-
-  /* =========================
-     6️⃣ SELECT PREVIOUS HOUR
-  ========================= */
+  await page.waitForTimeout(3000);
 
   const currentHour = new Date().getHours();
   let targetHour = currentHour - 1;
-  if (targetHour === 0) targetHour = 12;
+  if (targetHour <= 0) targetHour = 12;
   if (targetHour > 12) targetHour -= 12;
 
   await page.locator(`.clock-face__number span:text("${targetHour}")`).click();
 
   await page.waitForTimeout(1000);
 
-  // Click OK
   await page.getByText(/^ok$/i).click();
 
   await page.waitForTimeout(2000);
 
   /* =========================
-     7️⃣ CLICK APPLY
+     8️⃣ CLICK APPLY
   ========================= */
-
-  await page.getByRole('button', { name: /apply/i }).click().catch(async () => {
-    await page.locator('button:has-text("Apply")').click();
-  });
+  await page.getByRole('button', { name: /apply/i }).click()
+    .catch(async () => {
+      await page.locator('button:has-text("Apply")').click();
+    });
 
   /* =========================
-     8️⃣ WAIT FOR AQI APIs
+     9️⃣ WAIT FOR AQI APIs
   ========================= */
-
   await page.waitForTimeout(15000);
 
   /* =========================
-     9️⃣ SAVE API REPORT
+     🔟 SAVE REPORT
   ========================= */
-
   const docsDir = path.join(process.cwd(), 'docs');
   if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir);
 
@@ -179,5 +186,5 @@ ${rows}
 `
   );
 
-  console.log(`Captured ${capturedApis.length} APIs including AQI flow`);
+  console.log(`Captured ${capturedApis.length} APIs (Login + AQI)`);
 });

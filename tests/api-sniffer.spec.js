@@ -56,16 +56,26 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await page.waitForURL(/overview\/map/, { timeout: 60000 });
   await page.waitForTimeout(8000);
 
-  /* =========================
-     3️⃣ CLOSE POPUPS / OVERLAYS
-  ========================= */
+ /* =========================
+   SAFE POPUP CLOSER
+========================= */
 
-  // Close any close icon popup
-  const closeIcons = page.locator('mat-icon:has-text("close")');
-  if (await closeIcons.count() > 0) {
-    await closeIcons.first().click({ force: true });
-    await page.waitForTimeout(2000);
+const closeIcons = page.locator('mat-icon:has-text("close")');
+const count = await closeIcons.count();
+
+for (let i = 0; i < count; i++) {
+  const icon = closeIcons.nth(i);
+
+  if (await icon.isVisible().catch(() => false)) {
+    try {
+      await icon.click({ force: true });
+      console.log('Closed a visible popup');
+      await page.waitForTimeout(1500);
+      break;
+    } catch (e) {}
   }
+}
+
 
   // Remove dark overlay if present
   const backdrop = page.locator('.cdk-overlay-backdrop');
@@ -82,11 +92,19 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   /* =========================
      4️⃣ CLICK AQI VIEW
   ========================= */
-  await page.locator('mat-button-toggle:has-text("AQI View") button')
-    .click({ force: true });
+await page.locator('mat-button-toggle:has-text("AQI View") button')
+  .click({ force: true });
+
 
   await page.waitForURL(/overview\/aqi/, { timeout: 60000 });
   await page.waitForTimeout(6000);
+
+  // Remove overlay that blocks clicks
+const backdrop = page.locator('.cdk-overlay-backdrop');
+if (await backdrop.isVisible().catch(() => false)) {
+  await backdrop.click({ force: true });
+  await page.waitForTimeout(2000);
+}
 
   /* =========================
      5️⃣ SELECT DEVICE TYPE
@@ -180,3 +198,4 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   fs.writeFileSync(reportPath, html);
   console.log('✅ API report generated:', reportPath);
 });
+

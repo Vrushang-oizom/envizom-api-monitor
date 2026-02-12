@@ -16,7 +16,13 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
 
     if (url.includes('envdevapi.oizom.com')) {
       const apiData = {
-        time: new Date().toLocaleString(),
+        time: new Date().toLocaleTimeString('en-IN', {
+  timeZone: 'Asia/Kolkata',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit'
+}),
+
         method: response.request().method(),
         status: response.status(),
         url
@@ -151,3 +157,4 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   console.log("AQI APIs:", aqiApis.length);
   console.log("✅ HTML report updated");
 });
+

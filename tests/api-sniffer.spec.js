@@ -76,16 +76,22 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await aqiToggle.scrollIntoViewIfNeeded();
   await aqiToggle.click({ force: true });
 
-  await page.waitForTimeout(4000);
+  await page.waitForTimeout(5000);
 
   /* =========================
      5️⃣ SELECT DEVICE TYPE
   ========================= */
-  const deviceTypeInput = page.locator('input[placeholder="Device Type"]');
-  await deviceTypeInput.click();
+  await page.waitForSelector('input[formcontrolname="deviceType"]', {
+    timeout: 60000
+  });
 
-  const firstDeviceType = page.locator('mat-option').first();
-  await firstDeviceType.click();
+  const deviceTypeInput = page.locator('input[formcontrolname="deviceType"]').first();
+
+  await deviceTypeInput.scrollIntoViewIfNeeded();
+  await deviceTypeInput.click({ force: true });
+
+  await page.waitForSelector('mat-option', { timeout: 20000 });
+  await page.locator('mat-option').first().click();
 
   await page.waitForTimeout(3000);
 
@@ -98,6 +104,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await page.waitForTimeout(2000);
 
   await page.locator('.mat-calendar-body-today').click().catch(() => {});
+
   await page.waitForTimeout(2000);
 
   /* =========================
@@ -105,6 +112,7 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   ========================= */
   const timeInput = page.locator('input[formcontrolname="selectedTime"]');
   await timeInput.click();
+
   await page.waitForTimeout(3000);
 
   const currentHour = new Date().getHours();

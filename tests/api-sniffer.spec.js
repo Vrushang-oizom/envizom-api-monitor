@@ -79,13 +79,17 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   await dateInput.fill(dateStr);
   await page.keyboard.press('Enter');
 
-  /* =========================
-     6️⃣ OPEN TIME PICKER
-  ========================= */
-  const timeInput = page.locator('input[formcontrolname="selectedTime"]');
-  await timeInput.click();
+ /* =========================
+   OPEN TIME PICKER (CLICK ICON, NOT INPUT)
+========================= */
 
-  await page.waitForSelector('.clock-face', { timeout: 30000 });
+// Click the clock icon
+const clockIcon = page.locator('mat-icon', { hasText: 'schedule' }).first();
+await clockIcon.click({ force: true });
+
+// Now wait for picker to appear
+await page.waitForSelector('.timepicker', { timeout: 60000 });
+
 
   /* =========================
      7️⃣ SELECT PREVIOUS HOUR
@@ -169,3 +173,4 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
 
   console.log(`✅ API report generated with ${apis.length} APIs`);
 });
+

@@ -121,12 +121,13 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   /* =========================
      SWITCH PHASE TO AQI
   ========================= */
-  phase = "aqi";
+await page.getByRole('button', { name: /apply/i }).click();
 
-  /* =========================
-     CLICK APPLY
-  ========================= */
-  await page.getByRole('button', { name: /apply/i }).click();
+// 🔴 VERY IMPORTANT: switch AFTER APPLY
+phase = "aqi";
+
+// Clear previous auto-load noise
+await page.waitForTimeout(3000);
 
   /* =========================
      WAIT FOR AQI APIs
@@ -193,3 +194,4 @@ test('Envizom Full Flow → Login → AQI → Capture APIs', async ({ page }) =>
   console.log("AQI APIs:", aqiApis.length);
   console.log("✅ HTML report updated");
 });
+

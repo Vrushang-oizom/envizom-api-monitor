@@ -198,13 +198,20 @@ const html = `
 </head>
 
 <body>
-
-  <h1>📡 Envizom API Monitor</h1>
-  <p><b>Last Run:</b> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+  <h1>Envizom API Health Monitor</h1>
+  <p><b>Run Time:</b> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
 
   <div class="buttons">
-    <button onclick="showLogin()">🔐 LOGIN APIs</button>
-    <button onclick="showAQI()">🌫 OVERVIEW → AQI APIs</button>
+    <button onclick="toggle('login')">🔐 LOGIN APIs</button>
+    <button onclick="toggle('aqi')">🌫 OVERVIEW → AQI APIs</button>
+  </div>
+
+  <div id="loginTable" class="api-section">
+    ${buildTable('🔐 LOGIN APIs', loginApis)}
+  </div>
+
+  <div id="aqiTable" class="api-section">
+    ${buildTable('🌫 OVERVIEW → AQI APIs', aqiApis)}
   </div>
 
   <div id="loginBox" class="card">
@@ -236,6 +243,7 @@ const html = `
 fs.writeFileSync('docs/index.html', html);
 console.log('✅ API report generated');
   });
+
 
 
 

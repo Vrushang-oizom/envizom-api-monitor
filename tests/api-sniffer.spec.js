@@ -100,7 +100,12 @@ const buildTableHtml = (data) => {
         <td>${api.time}</td>
         <td>${api.status}</td>
         <td>${api.method}</td>
-        <td>${api.url}</td>
+        <td class="url-cell">
+  <a href="${api.url}" target="_blank">
+    ${api.url.length > 80 ? api.url.substring(0, 80) + '...' : api.url}
+  </a>
+</td>
+
         <td><pre>${api.data}</pre></td>
       </tr>`;
   });
@@ -124,72 +129,72 @@ const html = `
 <head>
   <title>Envizom API Monitor</title>
 
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial;
-      background: #f5f7fb;
-      padding: 20px;
-    }
+ <style>
+  body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f5f7fb;
+  }
 
-    h1 { margin-bottom: 5px; }
+  h1 {
+    margin-bottom: 5px;
+  }
 
-    .buttons {
-      margin: 20px 0;
-    }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 40px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
 
-    button {
-      padding: 12px 20px;
-      margin-right: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      cursor: pointer;
-      background: #2d6cdf;
-      color: white;
-    }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    font-size: 12px;
+    vertical-align: top;
+  }
 
-    button:hover {
-      background: #1f4fbf;
-    }
+  th {
+    background: #1f2937;
+    color: white;
+    font-weight: 600;
+  }
 
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      margin-top: 15px;
-    }
+  .ok {
+    background: #e6f4ea;
+  }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 12px;
-    }
+  .fail {
+    background: #fdecea;
+  }
 
-    th {
-      background: #1f2937;
-      color: white;
-      padding: 8px;
-    }
+  /* 🔴 FIX FOR UGLY URL COLUMN */
+  .url-cell {
+    max-width: 420px;
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 11px;
+    color: #333;
+  }
 
-    td {
-      padding: 6px;
-      border-bottom: 1px solid #eee;
-      word-break: break-all;
-    }
+  .url-cell a {
+    text-decoration: none;
+    color: #2563eb;
+  }
 
-    .ok { background: #e6f6ec; }
-    .fail { background: #fde8e8; }
+  .url-cell a:hover {
+    text-decoration: underline;
+  }
 
-    .hidden { display: none; }
-
-    pre {
-      max-height: 150px;
-      overflow: auto;
-      font-size: 11px;
-    }
-  </style>
+  pre {
+    max-height: 180px;
+    overflow: auto;
+    background: #f8fafc;
+    padding: 6px;
+    border-radius: 4px;
+  }
+</style>
 </head>
 
 <body>
@@ -231,6 +236,7 @@ const html = `
 fs.writeFileSync('docs/index.html', html);
 console.log('✅ API report generated');
   });
+
 
 
 

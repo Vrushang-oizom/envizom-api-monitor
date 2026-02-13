@@ -87,56 +87,148 @@ test('Envizom API Monitor → Login + AQI APIs', async ({ page }) => {
   // Wait for AQI APIs
   await page.waitForTimeout(15000);
 
-  /* =========================
-     GENERATE REPORT
-  ========================= */
-  const buildTable = (title, data) => `
-    <h2>${title}</h2>
+ /* =========================
+   GENERATE REPORT UI
+========================= */
+
+const buildTableHtml = (data) => {
+  let rows = "";
+
+  data.forEach(api => {
+    rows += `
+      <tr class="${api.status === 200 ? 'ok' : 'fail'}">
+        <td>${api.time}</td>
+        <td>${api.status}</td>
+        <td>${api.method}</td>
+        <td>${api.url}</td>
+        <td><pre>${api.data}</pre></td>
+      </tr>`;
+  });
+
+  return `
     <table>
       <tr>
         <th>Time</th>
         <th>Status</th>
         <th>Method</th>
         <th>URL</th>
-        <th>Response (trimmed)</th>
+        <th>Response</th>
       </tr>
-      ${data.map(api => `
-        <tr class="${api.status === 200 ? 'ok' : 'fail'}">
-          <td>${api.time}</td>
-          <td>${api.status}</td>
-          <td>${api.method}</td>
-          <td>${api.url}</td>
-          <td><pre>${api.data}</pre></td>
-        </tr>
-      `).join('')}
+      ${rows}
     </table>
   `;
+};
 
-  const html = `
-  <html>
-  <head>
-    <title>Envizom API Monitor</title>
-    <style>
-      body { font-family: Arial; padding: 20px; }
-      table { border-collapse: collapse; width: 100%; margin-bottom: 40px; }
-      th, td { border: 1px solid #ddd; padding: 6px; font-size: 12px; }
-      th { background: #222; color: white; }
-      .ok { background: #d4edda; }
-      .fail { background: #f8d7da; }
-      pre { max-height: 200px; overflow: auto; }
-    </style>
-  </head>
-  <body>
-    <h1>Envizom API Health Monitor</h1>
-    <p><b>Run Time:</b> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+const html = `
+<html>
+<head>
+  <title>Envizom API Monitor</title>
 
-    ${buildTable('🔐 LOGIN APIs', loginApis)}
-    ${buildTable('🌫 OVERVIEW → AQI APIs', aqiApis)}
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial;
+      background: #f5f7fb;
+      padding: 20px;
+    }
 
-  </body>
-  </html>
-  `;
+    h1 { margin-bottom: 5px; }
 
-  fs.writeFileSync('docs/index.html', html);
-  console.log('✅ API report generated');
-});
+    .buttons {
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      background: #2d6cdf;
+      color: white;
+    }
+
+    button:hover {
+      background: #1f4fbf;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-top: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    th {
+      background: #1f2937;
+      color: white;
+      padding: 8px;
+    }
+
+    td {
+      padding: 6px;
+      border-bottom: 1px solid #eee;
+      word-break: break-all;
+    }
+
+    .ok { background: #e6f6ec; }
+    .fail { background: #fde8e8; }
+
+    .hidden { display: none; }
+
+    pre {
+      max-height: 150px;
+      overflow: auto;
+      font-size: 11px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>📡 Envizom API Monitor</h1>
+  <p><b>Last Run:</b> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+
+  <div class="buttons">
+    <button onclick="showLogin()">🔐 LOGIN APIs</button>
+    <button onclick="showAQI()">🌫 OVERVIEW → AQI APIs</button>
+  </div>
+
+  <div id="loginBox" class="card">
+    <h2>🔐 Login APIs</h2>
+    ${buildTableHtml(loginApis)}
+  </div>
+
+  <div id="aqiBox" class="card hidden">
+    <h2>🌫 Overview AQI APIs</h2>
+    ${buildTableHtml(aqiApis)}
+  </div>
+
+  <script>
+    function showLogin() {
+      document.getElementById('loginBox').classList.remove('hidden');
+      document.getElementById('aqiBox').classList.add('hidden');
+    }
+
+    function showAQI() {
+      document.getElementById('aqiBox').classList.remove('hidden');
+      document.getElementById('loginBox').classList.add('hidden');
+    }
+  </script>
+
+</body>
+</html>
+`;
+
+fs.writeFileSync('docs/index.html', html);
+console.log('✅ API report generated');
+
+

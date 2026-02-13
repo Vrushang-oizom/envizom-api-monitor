@@ -230,5 +230,7 @@ const html = `
 
 fs.writeFileSync('docs/index.html', html);
 console.log('✅ API report generated');
+  });
+
 
 

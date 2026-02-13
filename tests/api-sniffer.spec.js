@@ -87,7 +87,7 @@ test('Envizom API Monitor → Login + AQI APIs', async ({ page }) => {
   // Wait for AQI APIs
   await page.waitForTimeout(15000);
 
- /* =========================
+/* =========================
    GENERATE REPORT UI
 ========================= */
 
@@ -100,14 +100,16 @@ const buildTableHtml = (data) => {
         <td>${api.time}</td>
         <td>${api.status}</td>
         <td>${api.method}</td>
+
         <td class="url-cell">
-  <a href="${api.url}" target="_blank">
-    ${api.url.length > 80 ? api.url.substring(0, 80) + '...' : api.url}
-  </a>
-</td>
+          <a href="${api.url}" target="_blank">
+            ${api.url.length > 90 ? api.url.substring(0, 90) + '...' : api.url}
+          </a>
+        </td>
 
         <td><pre>${api.data}</pre></td>
-      </tr>`;
+      </tr>
+    `;
   });
 
   return `
@@ -129,89 +131,98 @@ const html = `
 <head>
   <title>Envizom API Monitor</title>
 
- <style>
-  body {
-    font-family: Arial;
-    padding: 20px;
-    background: #f5f7fb;
-  }
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f5f7fb;
+    }
 
-  h1 {
-    margin-bottom: 5px;
-  }
+    h1 {
+      margin-bottom: 5px;
+    }
 
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-bottom: 40px;
-    background: white;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  }
+    .buttons {
+      margin: 20px 0;
+    }
 
-  th, td {
-    border: 1px solid #ddd;
-    padding: 6px;
-    font-size: 12px;
-    vertical-align: top;
-  }
+    button {
+      padding: 10px 18px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
 
-  th {
-    background: #1f2937;
-    color: white;
-    font-weight: 600;
-  }
+    button:hover {
+      background: #1d4ed8;
+    }
 
-  .ok {
-    background: #e6f4ea;
-  }
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
 
-  .fail {
-    background: #fdecea;
-  }
+    .hidden {
+      display: none;
+    }
 
-  /* 🔴 FIX FOR UGLY URL COLUMN */
-  .url-cell {
-    max-width: 420px;
-    word-break: break-all;
-    font-family: monospace;
-    font-size: 11px;
-    color: #333;
-  }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 15px;
+    }
 
-  .url-cell a {
-    text-decoration: none;
-    color: #2563eb;
-  }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      font-size: 12px;
+      vertical-align: top;
+    }
 
-  .url-cell a:hover {
-    text-decoration: underline;
-  }
+    th {
+      background: #1f2937;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
 
-  pre {
-    max-height: 180px;
-    overflow: auto;
-    background: #f8fafc;
-    padding: 6px;
-    border-radius: 4px;
-  }
-</style>
+    .ok { background: #e6f4ea; }
+    .fail { background: #fdecea; }
+
+    .url-cell {
+      max-width: 420px;
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    pre {
+      max-height: 180px;
+      overflow: auto;
+      background: #f8fafc;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+  </style>
 </head>
 
 <body>
+
   <h1>Envizom API Health Monitor</h1>
   <p><b>Run Time:</b> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
 
   <div class="buttons">
-    <button onclick="toggle('login')">🔐 LOGIN APIs</button>
-    <button onclick="toggle('aqi')">🌫 OVERVIEW → AQI APIs</button>
-  </div>
-
-  <div id="loginTable" class="api-section">
-    ${buildTable('🔐 LOGIN APIs', loginApis)}
-  </div>
-
-  <div id="aqiTable" class="api-section">
-    ${buildTable('🌫 OVERVIEW → AQI APIs', aqiApis)}
+    <button onclick="showLogin()">🔐 LOGIN APIs (${loginApis.length})</button>
+    <button onclick="showAQI()">🌫 OVERVIEW → AQI APIs (${aqiApis.length})</button>
   </div>
 
   <div id="loginBox" class="card">
@@ -243,6 +254,7 @@ const html = `
 fs.writeFileSync('docs/index.html', html);
 console.log('✅ API report generated');
   });
+
 
 
 

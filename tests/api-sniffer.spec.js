@@ -120,28 +120,37 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.waitForTimeout(1500);
 
   /* =========================
-     DATE RANGE (TODAY)
-  ========================= */
+   DATE RANGE (TODAY SAFE)
+========================= */
 
-  await page.locator(
-    'mat-datepicker-toggle button'
-  ).first().click({ force: true });
+const today = new Date();
+const dd = String(today.getDate()).padStart(2, '0');
+const mm = String(today.getMonth() + 1).padStart(2, '0');
+const yy = String(today.getFullYear()).slice(-2);
 
-  await page.waitForSelector('.mat-calendar-body-cell');
+const todayStr = `${dd}/${mm}/${yy}`;
 
-  const today = new Date().getDate();
+// start date
+const startDate = page.locator(
+  'input[formcontrolname="startDate"]'
+);
 
-  const todayCell = page.locator(
-    '.mat-calendar-body-cell-content'
-  ).filter({
-    hasText: new RegExp(`^${today}$`)
-  }).first();
+// end date
+const endDate = page.locator(
+  'input[formcontrolname="endDate"]'
+);
 
-  await todayCell.click({ force: true });
-  await page.waitForTimeout(300);
-  await todayCell.click({ force: true });
+await startDate.click({ force: true });
+await startDate.fill(todayStr);
 
-  await page.waitForTimeout(1000);
+await endDate.click({ force: true });
+await endDate.fill(todayStr);
+
+// press enter so Angular updates
+await endDate.press('Enter');
+
+await page.waitForTimeout(1000);
+
 
   /* =========================
      DATA SPAN DROPDOWN
@@ -263,3 +272,4 @@ function showDash(){
 
   console.log('✅ Dashboard Flow Completed');
 });
+

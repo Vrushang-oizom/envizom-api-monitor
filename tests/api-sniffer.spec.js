@@ -97,25 +97,36 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   await page.waitForTimeout(1500);
 
-  /* =========================
-     DEVICE DROPDOWN
-  ========================= */
+/* =========================
+   DEVICE DROPDOWN (RANDOM DEVICE)
+========================= */
 
-  const deviceInput = page.locator(
-    'input[formcontrolname="deviceSearch"]'
-  );
+// click device input
+const deviceInput = page.locator(
+  'input[formcontrolname="deviceSearch"]'
+);
 
-  await deviceInput.click();
-  await deviceInput.fill('polludrone');
+await deviceInput.click({ force: true });
+await page.waitForTimeout(1500);
 
-  await page.waitForTimeout(2000);
+// wait for options to appear
+await page.waitForSelector('mat-option', { timeout: 60000 });
 
-  await page.locator('mat-option')
-    .filter({ hasText: /polludrone/i })
-    .first()
-    .click();
+const options = page.locator('mat-option');
+const count = await options.count();
 
-  await page.waitForTimeout(2000);
+if (count === 0) {
+  throw new Error('No devices found in dropdown');
+}
+
+// pick random device
+const randomIndex = Math.floor(Math.random() * count);
+
+// 🔥 FORCE CLICK USING JS (bypass overlay)
+await options.nth(randomIndex).evaluate(el => el.click());
+
+await page.waitForTimeout(2000);
+
 
   /* =========================
      DATE RANGE (TODAY)
@@ -260,3 +271,4 @@ function showDash(){
 
   console.log('✅ Dashboard Flow Completed');
 });
+

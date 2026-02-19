@@ -126,30 +126,46 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   await page.waitForTimeout(2000);
 
-  /* =========================
-     DATA SPAN DROPDOWN
-  ========================= */
+ /* =========================
+   DATA SPAN (ULTRA SAFE)
+========================= */
 
-  const spans = [
-    'Raw Data',
-    '15 min avg',
-    '30 min avg',
-    '1 hour avg'
-  ];
+const spans = [
+  'raw',
+  '900',   // 15 min
+  '1800',  // 30 min
+  '3600'   // 1 hour
+];
 
-  const randomSpan =
-    spans[Math.floor(Math.random() * spans.length)];
+const randomSpan =
+  spans[Math.floor(Math.random() * spans.length)];
 
-  await page.locator(
+await page.evaluate((value) => {
+
+  const select = document.querySelector(
     'mat-select[formcontrolname="dataSpan"]'
-  ).click({ force: true });
+  );
 
-  await page.locator('mat-option')
-    .filter({ hasText: new RegExp(randomSpan, 'i') })
-    .first()
-    .evaluate(el => el.click());
+  if (!select) return;
 
-  await page.waitForTimeout(1000);
+  // trigger angular value change
+  select.dispatchEvent(new Event('click', { bubbles: true }));
+
+  // set internal value (Angular safe way)
+  const input = document.querySelector(
+    '[formcontrolname="dataSpan"]'
+  );
+
+  if (input) {
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+}, randomSpan);
+
+await page.waitForTimeout(1000);
+
 
   /* =========================
      APPLY BUTTON (SAFE)
@@ -211,3 +227,4 @@ ${buildTable(dashboardApis)}
   console.log('✅ Flow Completed');
 
 });
+

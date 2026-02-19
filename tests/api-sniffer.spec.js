@@ -118,29 +118,37 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.waitForTimeout(1000);
 
   /* =========================
-     DATA SPAN DROPDOWN (SAFE)
-  ========================= */
+   DATA SPAN DROPDOWN (ULTRA SAFE)
+========================= */
 
-  const spans = [
-    'Raw Data',
-    '15 min avg',
-    '30 min avg',
-    '1 hour avg'
-  ];
+const spans = [
+  'Raw Data',
+  '15 min avg',
+  '30 min avg',
+  '1 hour avg'
+];
 
-  const randomSpan =
-    spans[Math.floor(Math.random()*spans.length)];
+const randomSpan =
+  spans[Math.floor(Math.random() * spans.length)];
 
-  await page.locator(
-    'mat-select[formcontrolname="dataSpan"]'
-  ).click({ force:true });
+const dataSpanSelect =
+  page.locator('mat-select[formcontrolname="dataSpan"]');
 
-  await page.locator('mat-option')
-    .filter({ hasText:new RegExp(randomSpan,'i') })
-    .first()
-    .click({ force:true });
+// open dropdown safely
+await dataSpanSelect.evaluate(el => el.click());
 
-  await page.waitForTimeout(1000);
+// wait for angular overlay panel
+await page.waitForSelector('.cdk-overlay-pane mat-option', {
+  timeout: 10000
+});
+
+// select option INSIDE overlay only
+await page.locator('.cdk-overlay-pane mat-option')
+  .filter({ hasText: new RegExp(randomSpan, 'i') })
+  .first()
+  .evaluate(el => el.click());
+
+await page.waitForTimeout(800);
 
   /* =========================
      APPLY BUTTON
@@ -200,3 +208,4 @@ ${buildTable(dashboardApis)}
   console.log('✅ Flow Completed');
 
 });
+

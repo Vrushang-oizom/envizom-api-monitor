@@ -101,10 +101,6 @@ await page.evaluate(() => {
    FORCE CLOSE ALL OVERLAYS
 ========================= */
 
-// close tutorial popups
-await page.keyboard.press('Escape').catch(()=>{});
-await page.waitForTimeout(1000);
-
 // remove dark backdrop
 const tourBackdrop = page.locator('.ngx-ui-tour_backdrop');
 if (await tourBackdrop.count()) {
@@ -282,5 +278,6 @@ function showDash(){
 
   console.log('✅ Dashboard Flow Completed');
 });
+
 
 

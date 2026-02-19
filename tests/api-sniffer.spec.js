@@ -5,15 +5,23 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   const loginApis = [];
   const dashboardApis = [];
+
   let phase = 'login';
+  let captureDashboard = false;
 
   /* =========================
-     CAPTURE APIs
+     API CAPTURE (SAFE FILTER)
   ========================= */
   page.on('response', async (response) => {
 
     const url = response.url();
+
+    // capture ONLY envdev APIs
     if (!url.includes('envdevapi.oizom.com')) return;
+
+    // capture dashboard API only after Apply
+    if (captureDashboard &&
+        !url.includes('/devices/data')) return;
 
     let data = '';
     try {
@@ -32,7 +40,7 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
       method: response.request().method(),
       status: response.status(),
       url,
-      data: data.substring(0, 1000)
+      data: data.substring(0, 1200)
     };
 
     phase === 'login'
@@ -72,88 +80,82 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.waitForTimeout(6000);
 
   /* =========================
-     SAFE TOUR OVERLAY REMOVER
-     (DO NOT REMOVE overlay container)
+     OVERLAY KILLER (VERY IMPORTANT)
   ========================= */
-
   await page.evaluate(() => {
 
-    const removeBlockingTour = () => {
-      document.querySelectorAll(
-        '.ngx-ui-tour_backdrop, .transparent-overlay'
-      ).forEach(el => el.remove());
+    const kill = () => {
+      document.querySelectorAll(`
+        .transparent-overlay,
+        .ngx-ui-tour_backdrop,
+        .cdk-overlay-backdrop
+      `).forEach(e => e.remove());
     };
 
-    removeBlockingTour();
+    kill();
 
-    const observer = new MutationObserver(removeBlockingTour);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    new MutationObserver(kill)
+      .observe(document.body,{
+        childList:true,
+        subtree:true
+      });
   });
 
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(1500);
 
   /* =========================
      DEVICE DROPDOWN (RANDOM)
   ========================= */
 
-  const deviceInput = page.locator(
-    'input[formcontrolname="deviceSearch"]'
-  );
+  const deviceInput =
+    page.locator('input[formcontrolname="deviceSearch"]');
 
-  await deviceInput.click({ force: true });
+  await deviceInput.click({ force:true });
+  await page.waitForTimeout(1000);
 
   await page.waitForSelector('mat-option', { timeout: 60000 });
 
   const options = page.locator('mat-option');
   const count = await options.count();
 
-  if (!count) throw new Error('No devices found');
+  if (count === 0)
+    throw new Error('No devices found');
 
-  const randomIndex = Math.floor(Math.random() * count);
+  const randomIndex =
+    Math.floor(Math.random() * count);
 
-  await options.nth(randomIndex).scrollIntoViewIfNeeded();
-  await options.nth(randomIndex).click({ force: true });
+  await options.nth(randomIndex)
+    .evaluate(el => el.click());
 
   await page.waitForTimeout(1500);
 
   /* =========================
-   DATE RANGE (TODAY SAFE)
-========================= */
+     DATE RANGE (TODAY)
+  ========================= */
 
-const today = new Date();
-const dd = String(today.getDate()).padStart(2, '0');
-const mm = String(today.getMonth() + 1).padStart(2, '0');
-const yy = String(today.getFullYear()).slice(-2);
+  await page.locator(
+    'mat-datepicker-toggle button'
+  ).first().click({ force:true });
 
-const todayStr = `${dd}/${mm}/${yy}`;
+  await page.waitForTimeout(1500);
 
-// start date
-const startDate = page.locator(
-  'input[formcontrolname="startDate"]'
-);
+  const today = new Date().getDate();
 
-// end date
-const endDate = page.locator(
-  'input[formcontrolname="endDate"]'
-);
+  const todayCell = page.locator(
+    '.mat-calendar-body-cell-content'
+  ).filter({
+    hasText: new RegExp(`^${today}$`)
+  }).first();
 
-await startDate.click({ force: true });
-await startDate.fill(todayStr);
+  // click twice (start + end)
+  await todayCell.evaluate(el => el.click());
+  await page.waitForTimeout(300);
+  await todayCell.evaluate(el => el.click());
 
-await endDate.click({ force: true });
-await endDate.fill(todayStr);
-
-// press enter so Angular updates
-await endDate.press('Enter');
-
-await page.waitForTimeout(1000);
-
+  await page.waitForTimeout(1000);
 
   /* =========================
-     DATA SPAN DROPDOWN
+     DATA SPAN (RANDOM)
   ========================= */
 
   const spans = [
@@ -168,12 +170,12 @@ await page.waitForTimeout(1000);
 
   await page.locator(
     'mat-select[formcontrolname="dataSpan"]'
-  ).click({ force: true });
+  ).click({ force:true });
 
   await page.locator('mat-option')
-    .filter({ hasText: new RegExp(randomSpan, 'i') })
+    .filter({ hasText: new RegExp(randomSpan,'i') })
     .first()
-    .click({ force: true });
+    .evaluate(el => el.click());
 
   await page.waitForTimeout(1000);
 
@@ -181,35 +183,34 @@ await page.waitForTimeout(1000);
      APPLY BUTTON
   ========================= */
 
-  await page.getByRole('button', { name: /apply/i })
-    .click({ force: true });
+  captureDashboard = true;
 
-  await page.waitForTimeout(15000);
+  await page.getByRole('button', { name:/apply/i })
+    .click({ force:true });
+
+  await page.waitForTimeout(12000);
 
   /* =========================
      REPORT UI
   ========================= */
 
-  const buildTableHtml = (data) => {
+  const buildTable = (data) => {
+
     let rows = "";
 
     data.forEach(api => {
       rows += `
-      <tr class="${api.status === 200 ? 'ok':'fail'}">
+      <tr class="${api.status===200?'ok':'fail'}">
         <td>${api.time}</td>
         <td>${api.status}</td>
         <td>${api.method}</td>
-        <td class="url-cell">
-          <a href="${api.url}" target="_blank">
-            ${api.url.length > 90 ? api.url.substring(0,90)+'...' : api.url}
-          </a>
-        </td>
+        <td class="url">${api.url}</td>
         <td><pre>${api.data}</pre></td>
       </tr>`;
     });
 
     return `
-      <table>
+    <table>
       <tr>
         <th>Time</th>
         <th>Status</th>
@@ -218,7 +219,7 @@ await page.waitForTimeout(1000);
         <th>Response</th>
       </tr>
       ${rows}
-      </table>`;
+    </table>`;
   };
 
   const html = `
@@ -226,15 +227,15 @@ await page.waitForTimeout(1000);
 <head>
 <style>
 body{font-family:Arial;padding:20px;background:#f5f7fb;}
-button{padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:6px;margin-right:10px;}
-.card{background:white;padding:15px;margin-top:20px;border-radius:10px;}
+button{padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:6px;margin-right:10px;cursor:pointer;}
+.card{background:white;padding:15px;margin-top:20px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.1);}
 .hidden{display:none;}
 table{width:100%;border-collapse:collapse;}
-th,td{border:1px solid #ddd;padding:6px;font-size:12px;}
+th,td{border:1px solid #ddd;padding:6px;font-size:12px;vertical-align:top;}
 th{background:#1f2937;color:white;}
 .ok{background:#e6f4ea;}
 .fail{background:#fdecea;}
-.url-cell{max-width:420px;word-break:break-all;font-family:monospace;}
+.url{max-width:420px;word-break:break-all;font-family:monospace;}
 pre{max-height:180px;overflow:auto;background:#f8fafc;padding:6px;}
 </style>
 </head>
@@ -247,11 +248,11 @@ pre{max-height:180px;overflow:auto;background:#f8fafc;padding:6px;}
 <button onclick="showDash()">📊 DASHBOARD APIs</button>
 
 <div id="login" class="card">
-${buildTableHtml(loginApis)}
+${buildTable(loginApis)}
 </div>
 
 <div id="dash" class="card hidden">
-${buildTableHtml(dashboardApis)}
+${buildTable(dashboardApis)}
 </div>
 
 <script>
@@ -270,6 +271,5 @@ function showDash(){
 
   fs.writeFileSync('docs/index.html', html);
 
-  console.log('✅ Dashboard Flow Completed');
+  console.log('✅ FULL FLOW COMPLETED');
 });
-

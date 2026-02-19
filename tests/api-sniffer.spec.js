@@ -72,14 +72,34 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   await page.waitForTimeout(8000);
 
-  /* =========================
-     CLOSE TOUR OVERLAY
-  ========================= */
-  const tourBackdrop = page.locator('.ngx-ui-tour_backdrop');
-  if (await tourBackdrop.count()) {
-    await tourBackdrop.click({ force: true }).catch(()=>{});
-    await page.keyboard.press('Escape').catch(()=>{});
-  }
+ /* =========================
+   FORCE CLOSE ALL OVERLAYS
+========================= */
+
+// close tutorial popups
+await page.keyboard.press('Escape').catch(()=>{});
+await page.waitForTimeout(1000);
+
+// remove dark backdrop
+const tourBackdrop = page.locator('.ngx-ui-tour_backdrop');
+if (await tourBackdrop.count()) {
+  await tourBackdrop.first().click({ force: true }).catch(()=>{});
+}
+
+// close material overlays
+const overlays = page.locator('.cdk-overlay-backdrop');
+if (await overlays.count()) {
+  await overlays.first().click({ force: true }).catch(()=>{});
+}
+
+// sometimes walkthrough card stays visible
+await page.evaluate(() => {
+  document.querySelectorAll('.cdk-overlay-container')
+    .forEach(el => el.remove());
+});
+
+await page.waitForTimeout(1500);
+
 
   /* =========================
      DEVICE DROPDOWN
@@ -136,10 +156,11 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
     'mat-select[formcontrolname="dataSpan"]'
   ).click();
 
-  await page.locator('mat-option')
-    .filter({ hasText: randomSpan })
-    .first()
-    .click();
+ await page.locator('mat-option')
+  .filter({ hasText: /polludrone/i })
+  .first()
+  .click({ force: true });
+
 
   /* =========================
      APPLY BUTTON
@@ -236,3 +257,4 @@ function showDash(){
 
   console.log('✅ Dashboard Flow Completed');
 });
+

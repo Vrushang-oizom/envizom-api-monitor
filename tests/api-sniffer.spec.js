@@ -168,23 +168,29 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   ========================= */
 
   const buildTable = (data) => `
-  <table>
-    <tr>
-      <th>Time</th>
-      <th>Status</th>
-      <th>Method</th>
-      <th>URL</th>
-    </tr>
-    ${data.map(a=>`
-    <tr class="${a.status===200?'ok':'fail'}">
-      <td>${a.time}</td>
-      <td>${a.status}</td>
-      <td>${a.method}</td>
-      <td class="url">${a.url}</td>
-    </tr>
-    `).join('')}
-  </table>
-  `;
+<table>
+  <tr>
+    <th>Time</th>
+    <th>Status</th>
+    <th>Method</th>
+    <th>URL</th>
+    <th>Response JSON</th>
+  </tr>
+
+  ${data.map(a => `
+  <tr class="${a.status===200?'ok':'fail'}">
+    <td>${a.time}</td>
+    <td>${a.status}</td>
+    <td>${a.method}</td>
+    <td class="url">${a.url}</td>
+    <td>
+      <pre class="json-box">${a.data || ''}</pre>
+    </td>
+  </tr>
+  `).join('')}
+</table>
+`;
+
 
   const html = `
 <html>
@@ -209,6 +215,17 @@ padding:15px;
 margin-top:20px;
 border-radius:10px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+.json-box{
+  max-height:220px;
+  overflow:auto;
+  background:#0f172a;
+  color:#22c55e;
+  padding:8px;
+  border-radius:6px;
+  font-size:11px;
+  font-family:monospace;
+  white-space:pre-wrap;
 }
 .hidden{display:none;}
 table{width:100%;border-collapse:collapse;}
@@ -257,3 +274,4 @@ function show(id){
 
   console.log('🔥 FULL FLOW COMPLETED');
 });
+

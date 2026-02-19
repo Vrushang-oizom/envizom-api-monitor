@@ -37,7 +37,16 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
       data: data.substring(0, 1000)
     };
 
-    if (phase === 'login') loginApis.push(api);
+    if (phase === 'login') {
+  loginApis.push(api);
+}
+else if (phase === 'dashboard') {
+  dashboardApis.push(api);
+}
+else if (phase === 'aqi') {
+  aqiApis.push(api);
+}
+
     else if (phase === 'dashboard') dashboardApis.push(api);
     else if (phase === 'aqi') aqiApis.push(api);
   });
@@ -274,4 +283,5 @@ function show(id){
 
   console.log('🔥 FULL FLOW COMPLETED');
 });
+
 

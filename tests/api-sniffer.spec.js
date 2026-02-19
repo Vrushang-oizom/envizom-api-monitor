@@ -22,7 +22,9 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
         .includes('application/json')) {
         data = JSON.stringify(await response.json(), null, 2);
       }
-    } catch {}
+    } catch {
+      data = 'Unable to read response';
+    }
 
     const api = {
       time: new Date().toLocaleString('en-IN', {
@@ -31,7 +33,7 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
       method: response.request().method(),
       status: response.status(),
       url,
-      data: data.substring(0,1000)
+      data: data.substring(0, 1000)
     };
 
     phase === 'login'
@@ -51,14 +53,14 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.getByPlaceholder(/password/i)
     .fill(process.env.ENVIZOM_PASSWORD);
 
-  await page.locator('mat-checkbox').click({ force:true });
-  await page.getByRole('button',{name:/agree/i}).click();
-  await page.getByRole('button',{name:/log in/i}).click();
+  await page.locator('mat-checkbox').click({ force: true });
+  await page.getByRole('button', { name: /agree/i }).click();
+  await page.getByRole('button', { name: /log in/i }).click();
 
-  await page.waitForURL(/overview\/map/, { timeout:90000 });
+  await page.waitForURL(/overview\/map/, { timeout: 90000 });
 
   /* =========================
-     DASHBOARD
+     DASHBOARD MODULE
   ========================= */
 
   phase = 'dashboard';
@@ -70,31 +72,25 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.waitForTimeout(5000);
 
   /* =========================
-     PERMANENT OVERLAY KILLER
+     REMOVE OVERLAYS
   ========================= */
 
   await page.evaluate(() => {
-
     const kill = () => {
-      document.querySelectorAll(`
-        .transparent-overlay,
-        .ngx-ui-tour_backdrop,
-        .cdk-overlay-backdrop
-      `).forEach(el => el.remove());
+      document.querySelectorAll(
+        '.transparent-overlay, .ngx-ui-tour_backdrop, .cdk-overlay-backdrop'
+      ).forEach(el => el.remove());
     };
 
     kill();
-
-    new MutationObserver(kill)
-      .observe(document.body,{
-        childList:true,
-        subtree:true
-      });
-
+    new MutationObserver(kill).observe(document.body,{
+      childList:true,
+      subtree:true
+    });
   });
 
   /* =========================
-     DEVICE DROPDOWN
+     DEVICE DROPDOWN (RANDOM)
   ========================= */
 
   const deviceInput =
@@ -104,51 +100,41 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   await page.waitForSelector('mat-option');
 
-  const options = page.locator('mat-option');
-  const count = await options.count();
+  const devices = page.locator('mat-option');
+  const deviceCount = await devices.count();
 
-  if (!count) throw new Error('No devices found');
-
-  const randomIndex =
-    Math.floor(Math.random() * count);
-
-  await options.nth(randomIndex)
-    .click({ force:true });
+  await devices
+    .nth(Math.floor(Math.random()*deviceCount))
+    .evaluate(el => el.click());
 
   await page.waitForTimeout(1000);
 
   /* =========================
-   DATA SPAN DROPDOWN (ULTRA SAFE)
-========================= */
+     DATA SPAN (REAL FIX)
+  ========================= */
 
-const spans = [
-  'Raw Data',
-  '15 min avg',
-  '30 min avg',
-  '1 hour avg'
-];
+  const spans = [
+    'Raw data',
+    '15 minute avg',
+    '30 minute avg',
+    '1 hour avg'
+  ];
 
-const randomSpan =
-  spans[Math.floor(Math.random() * spans.length)];
+  const randomSpan =
+    spans[Math.floor(Math.random()*spans.length)];
 
-const dataSpanSelect =
-  page.locator('mat-select[formcontrolname="dataSpan"]');
+  await page.locator(
+    'mat-select[formcontrolname="dataSpan"]'
+  ).evaluate(el => el.click());
 
-// open dropdown safely
-await dataSpanSelect.evaluate(el => el.click());
+  await page.waitForSelector('#mat-select-0-panel');
 
-// wait for angular overlay panel
-await page.waitForSelector('.cdk-overlay-pane mat-option', {
-  timeout: 10000
-});
+  await page.locator('mat-option')
+    .filter({ hasText:new RegExp(randomSpan,'i') })
+    .first()
+    .evaluate(el => el.click());
 
-// select option INSIDE overlay only
-await page.locator('.cdk-overlay-pane mat-option')
-  .filter({ hasText: new RegExp(randomSpan, 'i') })
-  .first()
-  .evaluate(el => el.click());
-
-await page.waitForTimeout(800);
+  await page.waitForTimeout(800);
 
   /* =========================
      APPLY BUTTON
@@ -156,7 +142,7 @@ await page.waitForTimeout(800);
 
   dashboardApis.length = 0;
 
-  await page.getByRole('button',{name:/apply/i})
+  await page.getByRole('button', { name:/apply/i })
     .click({ force:true });
 
   await page.waitForTimeout(8000);
@@ -167,45 +153,35 @@ await page.waitForTimeout(800);
      REPORT
   ========================= */
 
-  const buildTable = (data) => `
-  <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
-    <tr>
-      <th>Time</th>
-      <th>Status</th>
-      <th>Method</th>
-      <th>URL</th>
-    </tr>
-    ${data.map(api=>`
+  const buildTable = data => `
+    <table border="1" cellpadding="5">
       <tr>
-        <td>${api.time}</td>
-        <td>${api.status}</td>
-        <td>${api.method}</td>
-        <td>${api.url}</td>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Method</th>
+        <th>URL</th>
       </tr>
-    `).join('')}
-  </table>
+      ${data.map(a=>`
+      <tr>
+        <td>${a.time}</td>
+        <td>${a.status}</td>
+        <td>${a.method}</td>
+        <td>${a.url}</td>
+      </tr>`).join('')}
+    </table>
   `;
 
-  const html = `
-<html>
-<body style="font-family:Arial;padding:20px">
-<h1>Envizom API Monitor</h1>
+  fs.writeFileSync('docs/index.html', `
+  <html>
+  <body style="font-family:Arial;padding:20px">
+    <h1>Envizom API Monitor</h1>
+    <h2>Login APIs</h2>
+    ${buildTable(loginApis)}
+    <h2>Dashboard APIs</h2>
+    ${buildTable(dashboardApis)}
+  </body>
+  </html>
+  `);
 
-<h2>🔐 Login APIs (${loginApis.length})</h2>
-${buildTable(loginApis)}
-
-<br>
-
-<h2>📊 Dashboard APIs (${dashboardApis.length})</h2>
-${buildTable(dashboardApis)}
-
-</body>
-</html>
-`;
-
-  fs.writeFileSync('docs/index.html', html);
-
-  console.log('✅ Flow Completed');
-
+  console.log('✅ FLOW COMPLETED');
 });
-

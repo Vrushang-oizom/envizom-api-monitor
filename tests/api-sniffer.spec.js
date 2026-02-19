@@ -70,57 +70,32 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
     'https://devenvizom.oizom.com/#/dashboard/table/AQ0499001'
   );
 
-  await page.waitForTimeout(8000);
+  await page.waitForTimeout(6000);
 
   /* =========================
-   AUTO REMOVE TOUR OVERLAY (PERMANENT FIX)
-========================= */
-await page.evaluate(() => {
+     AUTO REMOVE TOUR OVERLAY
+  ========================= */
 
-  const removeTour = () => {
-    document.querySelectorAll('.ngx-ui-tour_backdrop')
-      .forEach(el => el.remove());
+  await page.evaluate(() => {
 
-    document.querySelectorAll('.cdk-overlay-backdrop')
-      .forEach(el => el.remove());
-  };
+    const removeTour = () => {
+      document.querySelectorAll('.ngx-ui-tour_backdrop')
+        .forEach(el => el.remove());
 
-  // remove immediately
-  removeTour();
+      document.querySelectorAll('.cdk-overlay-backdrop')
+        .forEach(el => el.remove());
+    };
 
-  // keep removing if Angular recreates it
-  const observer = new MutationObserver(removeTour);
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
+    removeTour();
+
+    const observer = new MutationObserver(removeTour);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
   });
-});
 
-
- /* =========================
-   FORCE CLOSE ALL OVERLAYS
-========================= */
-
-// remove dark backdrop
-const tourBackdrop = page.locator('.ngx-ui-tour_backdrop');
-if (await tourBackdrop.count()) {
-  await tourBackdrop.first().click({ force: true }).catch(()=>{});
-}
-
-// close material overlays
-const overlays = page.locator('.cdk-overlay-backdrop');
-if (await overlays.count()) {
-  await overlays.first().click({ force: true }).catch(()=>{});
-}
-
-// sometimes walkthrough card stays visible
-await page.evaluate(() => {
-  document.querySelectorAll('.cdk-overlay-container')
-    .forEach(el => el.remove());
-});
-
-await page.waitForTimeout(1500);
-
+  await page.waitForTimeout(1500);
 
   /* =========================
      DEVICE DROPDOWN
@@ -131,14 +106,16 @@ await page.waitForTimeout(1500);
   );
 
   await deviceInput.click();
-  await page.waitForTimeout(1000);
-
-  // type polludrone
   await deviceInput.fill('polludrone');
+
   await page.waitForTimeout(2000);
 
-  // select first option
-  await page.locator('mat-option').first().click();
+  await page.locator('mat-option')
+    .filter({ hasText: /polludrone/i })
+    .first()
+    .click();
+
+  await page.waitForTimeout(2000);
 
   /* =========================
      DATE RANGE (TODAY)
@@ -146,18 +123,21 @@ await page.waitForTimeout(1500);
 
   await page.locator(
     'mat-datepicker-toggle button'
-  ).first().click({ force: true });
+  ).first().click();
 
   await page.waitForTimeout(1500);
 
-  // click today's date twice
-  const todayBtn = page.locator(
-    '.mat-calendar-body-cell-content'
-  ).filter({ hasText: new Date().getDate().toString() });
+  const today = new Date().getDate();
 
-  await todayBtn.first().click();
-  await page.waitForTimeout(500);
-  await todayBtn.first().click();
+  const todayCell = page.locator('.mat-calendar-body-cell')
+    .filter({ hasText: new RegExp(`^${today}$`) })
+    .first();
+
+  await todayCell.click();
+  await page.waitForTimeout(400);
+  await todayCell.click();
+
+  await page.waitForTimeout(1000);
 
   /* =========================
      DATA SPAN DROPDOWN
@@ -177,18 +157,19 @@ await page.waitForTimeout(1500);
     'mat-select[formcontrolname="dataSpan"]'
   ).click();
 
- await page.locator('mat-option')
-  .filter({ hasText: /polludrone/i })
-  .first()
-  .click({ force: true });
+  await page.locator('mat-option')
+    .filter({ hasText: new RegExp(randomSpan, 'i') })
+    .first()
+    .click();
 
+  await page.waitForTimeout(1000);
 
   /* =========================
      APPLY BUTTON
   ========================= */
 
   await page.getByRole('button', { name: /apply/i })
-    .click({ force: true });
+    .click();
 
   await page.waitForTimeout(15000);
 
@@ -197,6 +178,7 @@ await page.waitForTimeout(1500);
   ========================= */
 
   const buildTableHtml = (data) => {
+
     let rows = "";
 
     data.forEach(api => {
@@ -207,7 +189,7 @@ await page.waitForTimeout(1500);
         <td>${api.method}</td>
         <td class="url-cell">
           <a href="${api.url}" target="_blank">
-            ${api.url.substring(0,80)}...
+            ${api.url.length > 90 ? api.url.substring(0,90)+'...' : api.url}
           </a>
         </td>
         <td><pre>${api.data}</pre></td>
@@ -232,15 +214,15 @@ await page.waitForTimeout(1500);
 <head>
 <style>
 body{font-family:Arial;padding:20px;background:#f5f7fb;}
-button{padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:6px;}
-.card{background:white;padding:15px;margin-top:20px;border-radius:10px;}
+button{padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:6px;margin-right:10px;cursor:pointer;}
+.card{background:white;padding:15px;margin-top:20px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 .hidden{display:none;}
 table{width:100%;border-collapse:collapse;}
-th,td{border:1px solid #ddd;padding:6px;font-size:12px;}
+th,td{border:1px solid #ddd;padding:6px;font-size:12px;vertical-align:top;}
 th{background:#1f2937;color:white;}
 .ok{background:#e6f4ea;}
 .fail{background:#fdecea;}
-.url-cell{max-width:420px;word-break:break-all;}
+.url-cell{max-width:420px;word-break:break-all;font-family:monospace;}
 pre{max-height:180px;overflow:auto;background:#f8fafc;padding:6px;}
 </style>
 </head>
@@ -278,6 +260,3 @@ function showDash(){
 
   console.log('✅ Dashboard Flow Completed');
 });
-
-
-

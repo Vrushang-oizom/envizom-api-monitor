@@ -5,6 +5,7 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   const loginApis = [];
   const dashboardApis = [];
+  const aqiApis = [];
 
   let phase = 'login';
 
@@ -36,9 +37,9 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
       data: data.substring(0, 1000)
     };
 
-    phase === 'login'
-      ? loginApis.push(api)
-      : dashboardApis.push(api);
+    if (phase === 'login') loginApis.push(api);
+    else if (phase === 'dashboard') dashboardApis.push(api);
+    else if (phase === 'aqi') aqiApis.push(api);
   });
 
   /* =========================
@@ -60,7 +61,23 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.waitForURL(/overview\/map/, { timeout: 90000 });
 
   /* =========================
-     DASHBOARD MODULE
+     REMOVE OVERLAYS
+  ========================= */
+  await page.evaluate(() => {
+    const kill = () => {
+      document.querySelectorAll(
+        '.transparent-overlay, .ngx-ui-tour_backdrop, .cdk-overlay-backdrop'
+      ).forEach(el => el.remove());
+    };
+    kill();
+    new MutationObserver(kill).observe(document.body,{
+      childList:true,
+      subtree:true
+    });
+  });
+
+  /* =========================
+     DASHBOARD FLOW
   ========================= */
 
   phase = 'dashboard';
@@ -71,48 +88,23 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   await page.waitForTimeout(5000);
 
-  /* =========================
-     REMOVE OVERLAYS
-  ========================= */
-
-  await page.evaluate(() => {
-    const kill = () => {
-      document.querySelectorAll(
-        '.transparent-overlay, .ngx-ui-tour_backdrop, .cdk-overlay-backdrop'
-      ).forEach(el => el.remove());
-    };
-
-    kill();
-    new MutationObserver(kill).observe(document.body,{
-      childList:true,
-      subtree:true
-    });
-  });
-
-  /* =========================
-     DEVICE DROPDOWN (RANDOM)
-  ========================= */
-
+  // device dropdown
   const deviceInput =
     page.locator('input[formcontrolname="deviceSearch"]');
 
   await deviceInput.click({ force:true });
-
   await page.waitForSelector('mat-option');
 
   const devices = page.locator('mat-option');
-  const deviceCount = await devices.count();
+  const count = await devices.count();
 
   await devices
-    .nth(Math.floor(Math.random()*deviceCount))
+    .nth(Math.floor(Math.random()*count))
     .evaluate(el => el.click());
 
   await page.waitForTimeout(1000);
 
-  /* =========================
-     DATA SPAN (REAL FIX)
-  ========================= */
-
+  // data span dropdown
   const spans = [
     'Raw data',
     '15 minute avg',
@@ -134,54 +126,134 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
     .first()
     .evaluate(el => el.click());
 
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1000);
 
-  /* =========================
-     APPLY BUTTON
-  ========================= */
-
+  // APPLY
   dashboardApis.length = 0;
 
-  await page.getByRole('button', { name:/apply/i })
+  await page.getByRole('button',{ name:/apply/i })
     .click({ force:true });
 
   await page.waitForTimeout(8000);
 
-  console.log(`🔥 Dashboard APIs: ${dashboardApis.length}`);
-
   /* =========================
-     REPORT
+     OVERVIEW AQI FLOW
   ========================= */
 
-  const buildTable = data => `
-    <table border="1" cellpadding="5">
-      <tr>
-        <th>Time</th>
-        <th>Status</th>
-        <th>Method</th>
-        <th>URL</th>
-      </tr>
-      ${data.map(a=>`
-      <tr>
-        <td>${a.time}</td>
-        <td>${a.status}</td>
-        <td>${a.method}</td>
-        <td>${a.url}</td>
-      </tr>`).join('')}
-    </table>
+  phase = 'aqi';
+
+  await page.goto(
+    'https://devenvizom.oizom.com/#/overview/aqi'
+  );
+
+  await page.waitForTimeout(8000);
+
+  // select device type (first option)
+  const deviceType =
+    page.locator('input[formcontrolname="deviceType"]');
+
+  if (await deviceType.count()) {
+    await deviceType.first().click({ force:true });
+    await page.waitForTimeout(1000);
+
+    const opts = page.locator('mat-option');
+    if (await opts.count())
+      await opts.first().evaluate(el=>el.click());
+  }
+
+  await page.waitForTimeout(2000);
+
+  /* =========================
+     REPORT UI
+  ========================= */
+
+  const buildTable = (data) => `
+  <table>
+    <tr>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Method</th>
+      <th>URL</th>
+    </tr>
+    ${data.map(a=>`
+    <tr class="${a.status===200?'ok':'fail'}">
+      <td>${a.time}</td>
+      <td>${a.status}</td>
+      <td>${a.method}</td>
+      <td class="url">${a.url}</td>
+    </tr>
+    `).join('')}
+  </table>
   `;
 
-  fs.writeFileSync('docs/index.html', `
-  <html>
-  <body style="font-family:Arial;padding:20px">
-    <h1>Envizom API Monitor</h1>
-    <h2>Login APIs</h2>
-    ${buildTable(loginApis)}
-    <h2>Dashboard APIs</h2>
-    ${buildTable(dashboardApis)}
-  </body>
-  </html>
-  `);
+  const html = `
+<html>
+<head>
+<style>
+body{font-family:Arial;background:#f5f7fb;padding:20px;}
+h1{margin-bottom:10px;}
+button{
+padding:10px 18px;
+margin-right:10px;
+border:none;
+background:#2563eb;
+color:white;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+button:hover{background:#1d4ed8;}
+.card{
+background:white;
+padding:15px;
+margin-top:20px;
+border-radius:10px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+.hidden{display:none;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid #ddd;padding:6px;font-size:12px;}
+th{background:#1f2937;color:white;}
+.ok{background:#e6f4ea;}
+.fail{background:#fdecea;}
+.url{word-break:break-all;font-family:monospace;}
+</style>
+</head>
 
-  console.log('✅ FLOW COMPLETED');
+<body>
+
+<h1>Envizom API Monitor</h1>
+
+<button onclick="show('login')">🔐 LOGIN APIs</button>
+<button onclick="show('dash')">📊 DASHBOARD APIs</button>
+<button onclick="show('aqi')">🌫 OVERVIEW AQI APIs</button>
+
+<div id="login" class="card">
+${buildTable(loginApis)}
+</div>
+
+<div id="dash" class="card hidden">
+${buildTable(dashboardApis)}
+</div>
+
+<div id="aqi" class="card hidden">
+${buildTable(aqiApis)}
+</div>
+
+<script>
+function show(id){
+ ['login','dash','aqi'].forEach(x=>{
+   document.getElementById(x).classList.add('hidden');
+ });
+ document.getElementById(id).classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
+`;
+
+  fs.writeFileSync('docs/index.html', html);
+
+  console.log('🔥 FULL FLOW COMPLETED');
 });

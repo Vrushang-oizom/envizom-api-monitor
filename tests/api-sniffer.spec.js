@@ -1,36 +1,31 @@
 const { test } = require('@playwright/test');
 const fs = require('fs');
 
-test('Envizom API Monitor → Login + AQI APIs', async ({ page }) => {
+test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   const loginApis = [];
   const aqiApis = [];
+  const dashboardApis = [];
 
   let phase = 'login';
 
-  const IMPORTANT_API_PATTERNS = [
-    '/users/login',
-    '/overview',
-    '/devices/data',
-    '/real-time'
-  ];
-
   /* =========================
-     CAPTURE IMPORTANT APIs
+     API CAPTURE
   ========================= */
-  page.on('response', async (response) => {
-    const url = response.url();
 
+  page.on('response', async (response) => {
+
+    const url = response.url();
     if (!url.includes('envdevapi.oizom.com')) return;
-    if (!IMPORTANT_API_PATTERNS.some(p => url.includes(p))) return;
 
     let responseData = '';
+
     try {
-      const contentType = response.headers()['content-type'] || '';
-      if (contentType.includes('application/json')) {
+      const ct = response.headers()['content-type'] || '';
+      if (ct.includes('application/json')) {
         responseData = JSON.stringify(await response.json(), null, 2);
       } else {
-        responseData = 'Non-JSON response';
+        responseData = 'Non JSON response';
       }
     } catch {
       responseData = 'Failed to read response';
@@ -41,78 +36,143 @@ test('Envizom API Monitor → Login + AQI APIs', async ({ page }) => {
       method: response.request().method(),
       status: response.status(),
       url,
-      data: responseData.substring(0, 1000) // limit size
+      data: responseData.substring(0, 1000)
     };
 
-    phase === 'login' ? loginApis.push(api) : aqiApis.push(api);
+    if (phase === 'login') loginApis.push(api);
+    else if (phase === 'aqi') aqiApis.push(api);
+    else if (phase === 'dashboard') dashboardApis.push(api);
   });
 
   /* =========================
      LOGIN
   ========================= */
+
   await page.goto('https://devenvizom.oizom.com/#/login');
 
-  await page.getByPlaceholder(/email/i).fill(process.env.ENVIZOM_EMAIL);
-  await page.getByPlaceholder(/password/i).fill(process.env.ENVIZOM_PASSWORD);
+  await page.getByPlaceholder(/email/i)
+    .fill(process.env.ENVIZOM_EMAIL);
+
+  await page.getByPlaceholder(/password/i)
+    .fill(process.env.ENVIZOM_PASSWORD);
 
   await page.locator('mat-checkbox').click({ force: true });
   await page.getByRole('button', { name: /agree/i }).click();
-
   await page.getByRole('button', { name: /log in/i }).click();
 
   await page.waitForURL(/overview\/map/, { timeout: 90000 });
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(6000);
 
   /* =========================
-     SWITCH TO AQI PHASE
+     AQI MODULE
   ========================= */
+
   phase = 'aqi';
 
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
   await page.waitForTimeout(8000);
 
-  /* =========================
-     DEVICE TYPE (ONLY)
-  ========================= */
-  const deviceType = page.locator('input[formcontrolname="deviceType"]');
-  await deviceType.waitFor({ timeout: 60000 });
+  const deviceType = page.locator(
+    'input[formcontrolname="deviceType"]'
+  );
+
   await deviceType.click();
+  await page.waitForTimeout(1500);
+
   await page.locator('mat-option').first().click();
 
-  /* =========================
-     APPLY (NO TIME SELECTION)
-  ========================= */
   await page.getByRole('button', { name: /apply/i }).click();
 
-  // Wait for AQI APIs
   await page.waitForTimeout(15000);
 
-/* =========================
-   GENERATE REPORT UI
-========================= */
+  /* =========================
+     DASHBOARD MODULE
+  ========================= */
 
-const buildTableHtml = (data) => {
-  let rows = "";
+  phase = 'dashboard';
 
-  data.forEach(api => {
-    rows += `
+  await page.goto(
+    'https://devenvizom.oizom.com/#/dashboard/table/AQ0499001'
+  );
+
+  await page.waitForTimeout(8000);
+
+  // DEVICE DROPDOWN
+  const deviceInput =
+    page.locator('input[formcontrolname="deviceSearch"]');
+
+  await deviceInput.click();
+  await page.waitForTimeout(1500);
+
+  await page.locator('mat-option')
+    .filter({ hasText: /polludrone/i })
+    .first()
+    .click();
+
+  // DATE RANGE
+  await page.locator('mat-datepicker-toggle button')
+    .first()
+    .click();
+
+  await page.waitForTimeout(1500);
+
+  const today = page.locator('.mat-calendar-body-today');
+
+  await today.first().click();
+  await page.waitForTimeout(800);
+  await today.first().click();
+
+  // DATA SPAN RANDOM
+  const dataSpan =
+    page.locator('mat-select[formcontrolname="dataSpan"]');
+
+  await dataSpan.click();
+
+  const options = [
+    'Raw data',
+    '15 min avg',
+    '30 min avg',
+    '1 hour avg'
+  ];
+
+  const random =
+    options[Math.floor(Math.random() * options.length)];
+
+  await page.locator('mat-option')
+    .filter({ hasText: random })
+    .first()
+    .click();
+
+  await page.getByRole('button', { name: /apply/i }).click();
+
+  await page.waitForTimeout(15000);
+
+  /* =========================
+     HTML REPORT
+  ========================= */
+
+  const buildTableHtml = (data) => {
+
+    let rows = '';
+
+    data.forEach(api => {
+      rows += `
       <tr class="${api.status === 200 ? 'ok' : 'fail'}">
         <td>${api.time}</td>
         <td>${api.status}</td>
         <td>${api.method}</td>
-
         <td class="url-cell">
           <a href="${api.url}" target="_blank">
-            ${api.url.length > 90 ? api.url.substring(0, 90) + '...' : api.url}
+            ${api.url.length > 80
+              ? api.url.substring(0,80)+'...'
+              : api.url}
           </a>
         </td>
-
         <td><pre>${api.data}</pre></td>
-      </tr>
-    `;
-  });
+      </tr>`;
+    });
 
-  return `
+    return `
     <table>
       <tr>
         <th>Time</th>
@@ -122,141 +182,73 @@ const buildTableHtml = (data) => {
         <th>Response</th>
       </tr>
       ${rows}
-    </table>
-  `;
-};
+    </table>`;
+  };
 
-const html = `
+  const html = `
 <html>
 <head>
-  <title>Envizom API Monitor</title>
+<title>Envizom API Monitor</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #f5f7fb;
-    }
-
-    h1 {
-      margin-bottom: 5px;
-    }
-
-    .buttons {
-      margin: 20px 0;
-    }
-
-    button {
-      padding: 10px 18px;
-      margin-right: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #2563eb;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      margin-top: 20px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 15px;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 6px;
-      font-size: 12px;
-      vertical-align: top;
-    }
-
-    th {
-      background: #1f2937;
-      color: white;
-      position: sticky;
-      top: 0;
-    }
-
-    .ok { background: #e6f4ea; }
-    .fail { background: #fdecea; }
-
-    .url-cell {
-      max-width: 420px;
-      word-break: break-all;
-      font-family: monospace;
-      font-size: 11px;
-    }
-
-    pre {
-      max-height: 180px;
-      overflow: auto;
-      background: #f8fafc;
-      padding: 6px;
-      border-radius: 4px;
-      font-size: 11px;
-    }
-  </style>
+<style>
+body{font-family:Arial;padding:20px;background:#f5f7fb}
+button{padding:10px 16px;margin-right:10px;
+background:#2563eb;color:white;border:none;border-radius:6px}
+.card{background:white;padding:15px;border-radius:10px;margin-top:20px}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:6px;font-size:12px}
+th{background:#1f2937;color:white}
+.ok{background:#e6f4ea}
+.fail{background:#fdecea}
+.url-cell{max-width:420px;word-break:break-all}
+pre{max-height:180px;overflow:auto;background:#f8fafc}
+</style>
 </head>
 
 <body>
 
-  <h1>Envizom API Health Monitor</h1>
-  <p><b>Run Time:</b> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+<h1>Envizom API Health Monitor</h1>
+<p><b>Run Time:</b> ${
+  new Date().toLocaleString('en-IN',
+  { timeZone:'Asia/Kolkata' })
+}</p>
 
-  <div class="buttons">
-    <button onclick="showLogin()">🔐 LOGIN APIs (${loginApis.length})</button>
-    <button onclick="showAQI()">🌫 OVERVIEW → AQI APIs (${aqiApis.length})</button>
-  </div>
+<button onclick="show('login')">🔐 LOGIN APIs</button>
+<button onclick="show('aqi')">🌫 OVERVIEW → AQI APIs</button>
+<button onclick="show('dashboard')">📊 DASHBOARD APIs</button>
 
-  <div id="loginBox" class="card">
-    <h2>🔐 Login APIs</h2>
-    ${buildTableHtml(loginApis)}
-  </div>
+<div id="login" class="card">
+${buildTableHtml(loginApis)}
+</div>
 
-  <div id="aqiBox" class="card hidden">
-    <h2>🌫 Overview AQI APIs</h2>
-    ${buildTableHtml(aqiApis)}
-  </div>
+<div id="aqi" class="card hidden">
+${buildTableHtml(aqiApis)}
+</div>
 
-  <script>
-    function showLogin() {
-      document.getElementById('loginBox').classList.remove('hidden');
-      document.getElementById('aqiBox').classList.add('hidden');
-    }
+<div id="dashboard" class="card hidden">
+${buildTableHtml(dashboardApis)}
+</div>
 
-    function showAQI() {
-      document.getElementById('aqiBox').classList.remove('hidden');
-      document.getElementById('loginBox').classList.add('hidden');
-    }
-  </script>
+<script>
+function show(id){
+  ['login','aqi','dashboard']
+  .forEach(x=>document.getElementById(x)
+  .classList.add('hidden'));
+  document.getElementById(id)
+  .classList.remove('hidden');
+}
+</script>
 
 </body>
 </html>
 `;
 
-fs.writeFileSync('docs/index.html', html);
-console.log('✅ API report generated');
-  });
+  fs.writeFileSync('docs/index.html', html);
 
+  console.log('✔ Login APIs:', loginApis.length);
+  console.log('✔ AQI APIs:', aqiApis.length);
+  console.log('✔ Dashboard APIs:', dashboardApis.length);
+  console.log('🚀 Report Updated');
 
-
-
-
-
+});

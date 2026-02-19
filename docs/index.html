@@ -1,90 +1,77 @@
 
 <html>
 <body style="font-family:Arial;padding:20px">
-
 <h1>Envizom API Monitor</h1>
 
-<h2>🔐 Login APIs</h2>
+<h2>🔐 Login APIs (4)</h2>
 
-      <table>
+  <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+    <tr>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Method</th>
+      <th>URL</th>
+    </tr>
+    
       <tr>
-        <th>Time</th>
-        <th>Status</th>
-        <th>Method</th>
-        <th>URL</th>
-      </tr>
-      
-      <tr>
-        <td>19/2/2026, 4:39:18 pm</td>
+        <td>19/2/2026, 5:27:29 pm</td>
         <td>200</td>
         <td>POST</td>
         <td>https://envdevapi.oizom.com/users/login/v2</td>
       </tr>
-      
+    
       <tr>
-        <td>19/2/2026, 4:39:22 pm</td>
+        <td>19/2/2026, 5:27:33 pm</td>
         <td>200</td>
         <td>GET</td>
         <td>https://envdevapi.oizom.com/users/3994/overview/v2?userId=3994&profile=auto&devices_data=auto&cluster=auto&devices=auto&units=auto&aqi_and_units=auto&module_expiry=auto&org=auto&master_org=auto&device_types=auto&complain_categories=auto&latest_features=auto&modules=auto&widgets=auto&lastUpdatedToken=</td>
       </tr>
-      
+    
       <tr>
-        <td>19/2/2026, 4:39:22 pm</td>
+        <td>19/2/2026, 5:27:33 pm</td>
         <td>200</td>
         <td>GET</td>
-        <td>https://envdevapi.oizom.com/real-time/users/3994?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaXNUb3BPcmciOmZhbHNlLCJpYXQiOjE3NzE0OTkzNTgsImlkIjoiYzJkNDg5MzgtMGI1YS00OGVlLWI0NTctZTYyOThiZDMxOWY5IiwidmVyc2lvbiI6IjIiLCJleHAiOjE3NzIxMDQxNTgsImlzcyI6ImRldl90ZXJtaW5hbDpvaXpvbV9pbnN0cnVtZW50cyJ9.ZM05tlguBE8xxmVy7Qzzg6M4ZlJoVSXONWbFEkU0zz4</td>
+        <td>https://envdevapi.oizom.com/real-time/users/3994?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaXNUb3BPcmciOmZhbHNlLCJpYXQiOjE3NzE1MDIyNDksImlkIjoiOGEyMjEwMjYtMmQ5Ni00NTA4LWI3YWQtN2ZkY2U2MzI0Y2IzIiwidmVyc2lvbiI6IjIiLCJleHAiOjE3NzIxMDcwNDksImlzcyI6ImRldl90ZXJtaW5hbDpvaXpvbV9pbnN0cnVtZW50cyJ9.ojpk75k7zjbKR9OS25XiL5ioMHwVN0g3ZMyOqS7nj4I</td>
       </tr>
-      
+    
       <tr>
-        <td>19/2/2026, 4:39:23 pm</td>
+        <td>19/2/2026, 5:27:35 pm</td>
         <td>200</td>
         <td>GET</td>
         <td>https://envdevapi.oizom.com/users/3994/overview/v2?userId=3994&profile=auto&devices_data=auto&cluster=auto&devices=auto&units=auto&aqi_and_units=auto&module_expiry=auto&org=auto&master_org=auto&device_types=auto&complain_categories=auto&latest_features=auto&modules=auto&widgets=auto&lastUpdatedToken=eyJvcmciOiJmZGFjM2M4ZmM5MzllMDUwZGE5OGNlYTE3ZDIwNGJmMGViNTU1ZmNjYzUwY2MwZWMxNzljNzQ3Yzc2MGNmNDQ3IiwibWFzdGVyX29yZyI6ImNiMTYzYzZiOTNlYzYwZTZkZjBjZTM0ZmM1NzEyY2Y0MjMyMzdjNGRjOWVmNzI0MGEwMzBmYjFiOGY2YzE3NjYiLCJwcm9maWxlIjoiMTIwMTRhZGY2ZDhiNTc4MjdjYjc4MDFhOWY0NTQwYzY5ZmJhOGVkZjZlZWI0NzVlMGM4ODg2YTBiMjYxNjIzZSIsImNsdXN0ZXIiOiI0ZjUzY2RhMThjMmJhYTBjMDM1NGJiNWY5YTNlY2JlNWVkMTJhYjRkOGUxMWJhODczYzJmMTExNjEyMDJiOTQ1IiwiZGV2aWNlX3R5cGVzIjoiNWEyZWIwODY5NjQ5MWQ4YmI0M2NiYjIyZTRjYzFmMWU5OTI1ZjkyMmU3ZDhmYjM5NWI5OGYzNGNmYmRiMDY4NiIsImNvbXBsYWluX2NhdGVnb3JpZXMiOiJjZDcxYzcyNWFlOTBjN2JmODI5ZjA2NTkzNzU2NmI5ZjA5MWU2NjMyY2M1OTUyMDJmMjY0MjFjN2U0Y2I4NjI3IiwibGF0ZXN0X2ZlYXR1cmVzIjoiMGNkYzBmZmNmNzAwNmRhN2U5OTAzZDkyZDY5NGUyZjhhYjZmZWM3YTRiNWY0NjE1ZmI4ZTIzODdkZGNlOTk0YSIsIm1vZHVsZXMiOiJhM2JjYTJhMjdkODU1OTg2NTRlMjM3NTdiOTZjMjc5MzcxOGJhNzRiZTllZjk0ODU3N2FiNGI0YTI2ZjViMjM5Iiwid2lkZ2V0cyI6IjI2MWVhZWQ4YTcwY2IzMDhiNzFhZjAxZDE5OWI0OWEyZTZkNTQ5OWM3ZWQ0ZmNlZDMzYjU3MjA1MmJiMmVmNWMiLCJtb2R1bGVfZXhwaXJ5IjoiMGViYTBmOWNlM2EwNGVlMjc5OWFhNGM3ODdlYTcxMDI2MTE3MzZiZDg0ZGZkMWQyOWY2MjhhZTA4MjE3YmYwMCIsImFxaV9hbmRfdW5pdHMiOiJiZTNjY2U0NDhmNDllOTg5YjcyMjFlNzBhN2NiMTFmYjJmYjA0OTA1Y2IyYWJmMDkyZmFiYTE5YTUyOWQ2NmVmIiwiZGV2aWNlcyI6IjdiMzYzNjExMjk2MWE3ZWQ2YWNmYzE4ZDFmN2ZhMzc0Yjc3YjRjOTdjODQyNjg4NjEyMmQ2MWIxYjhlNGEyZmUifQ==</td>
       </tr>
-      
-      <tr>
-        <td>19/2/2026, 4:39:27 pm</td>
-        <td>200</td>
-        <td>GET</td>
-        <td>https://envdevapi.oizom.com/devices/data?deviceIds=582B0A9B89BC0000&deviceIds=A81B6A6A70AA0000&deviceIds=AQ0499001&deviceIds=EADODOUR01&deviceIds=MP14672&deviceIds=MP14682&deviceIds=MP14689&deviceIds=MP14693&deviceIds=MP14694&deviceIds=MP14695&deviceIds=YG19D0003&deviceIds=YG19D0004&deviceIds=YG19D0005&deviceIds=YG19D0006&deviceIds=YG19D0007&deviceIds=YG19D0008&deviceIds=YG19D0010&deviceIds=YG19O0003&deviceIds=YG19O0004&deviceIds=YG19O0005&deviceIds=YG19P0011&deviceIds=YG19P0012&deviceIds=YG19P0013&deviceIds=YG19P0014&deviceIds=YG19P0015&deviceIds=YG19P0016&deviceIds=YG19P0017&deviceIds=YG19P0018&deviceIds=YG19P0019&deviceIds=YG19P0020&deviceIds=YG19P0021&deviceIds=YG19P0022&deviceIds=YG19P0023&deviceIds=YG19P0024&deviceIds=YG19P0025&deviceIds=YG19R0001&deviceIds=YG19R0002&deviceIds=YG19R0003&deviceIds=YG19R0004&deviceIds=YG19R0005&deviceIds=YG19R0006&deviceIds=YG19R0007&deviceIds=YG19W0001&processType=latest&userId=3994</td>
-      </tr>
-      
-      <tr>
-        <td>19/2/2026, 4:39:27 pm</td>
-        <td>200</td>
-        <td>GET</td>
-        <td>https://envdevapi.oizom.com/users/3994/last-seen?userId=3994&topics=header-notification</td>
-      </tr>
-      
-      <tr>
-        <td>19/2/2026, 4:39:27 pm</td>
-        <td>200</td>
-        <td>GET</td>
-        <td>https://envdevapi.oizom.com/users/3994/notifications?gte=1771353000&lte=1771525799</td>
-      </tr>
-      
-      </table>
     
+  </table>
+  
 
-<h2>📊 Dashboard APIs</h2>
+<br>
 
-      <table>
+<h2>📊 Dashboard APIs (2)</h2>
+
+  <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+    <tr>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Method</th>
+      <th>URL</th>
+    </tr>
+    
       <tr>
-        <th>Time</th>
-        <th>Status</th>
-        <th>Method</th>
-        <th>URL</th>
-      </tr>
-      
-      <tr>
-        <td>19/2/2026, 4:39:44 pm</td>
+        <td>19/2/2026, 5:27:55 pm</td>
         <td>200</td>
         <td>GET</td>
-        <td>https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0012&avg=3600&gte=1771353000&lte=1771497000&processType=avg&filter=all&userId=3994</td>
+        <td>https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&gte=1771353000&lte=1771502269&processType=raw&filter=all&userId=3994</td>
       </tr>
-      
-      </table>
     
+      <tr>
+        <td>19/2/2026, 5:27:56 pm</td>
+        <td>200</td>
+        <td>GET</td>
+        <td>https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&gte=1771353000&lte=1771502269&processType=raw&filter=all&userId=3994</td>
+      </tr>
+    
+  </table>
+  
 
 </body>
 </html>

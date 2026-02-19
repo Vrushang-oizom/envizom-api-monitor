@@ -5,7 +5,6 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   const loginApis = [];
   const dashboardApis = [];
-
   let phase = 'login';
 
   /* =========================
@@ -58,7 +57,7 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.getByRole('button', { name: /log in/i }).click();
 
   await page.waitForURL(/overview\/map/, { timeout: 90000 });
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(4000);
 
   /* =========================
      DASHBOARD MODULE
@@ -73,60 +72,52 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.waitForTimeout(6000);
 
   /* =========================
-     AUTO REMOVE TOUR OVERLAY
+     SAFE TOUR OVERLAY REMOVER
+     (DO NOT REMOVE overlay container)
   ========================= */
 
   await page.evaluate(() => {
 
-    const removeTour = () => {
-      document.querySelectorAll('.ngx-ui-tour_backdrop')
-        .forEach(el => el.remove());
-
-      document.querySelectorAll('.cdk-overlay-backdrop')
-        .forEach(el => el.remove());
+    const removeBlockingTour = () => {
+      document.querySelectorAll(
+        '.ngx-ui-tour_backdrop, .transparent-overlay'
+      ).forEach(el => el.remove());
     };
 
-    removeTour();
+    removeBlockingTour();
 
-    const observer = new MutationObserver(removeTour);
+    const observer = new MutationObserver(removeBlockingTour);
     observer.observe(document.body, {
       childList: true,
       subtree: true
     });
   });
 
+  await page.waitForTimeout(1000);
+
+  /* =========================
+     DEVICE DROPDOWN (RANDOM)
+  ========================= */
+
+  const deviceInput = page.locator(
+    'input[formcontrolname="deviceSearch"]'
+  );
+
+  await deviceInput.click({ force: true });
+
+  await page.waitForSelector('mat-option', { timeout: 60000 });
+
+  const options = page.locator('mat-option');
+  const count = await options.count();
+
+  if (!count) throw new Error('No devices found');
+
+  const randomIndex = Math.floor(Math.random() * count);
+
+  await options.nth(randomIndex).scrollIntoViewIfNeeded();
+  await options.nth(randomIndex).click({ force: true });
+
   await page.waitForTimeout(1500);
-
-/* =========================
-   DEVICE DROPDOWN (RANDOM DEVICE)
-========================= */
-
-// click device input
-const deviceInput = page.locator(
-  'input[formcontrolname="deviceSearch"]'
-);
-
-await deviceInput.click({ force: true });
-await page.waitForTimeout(1500);
-
-// wait for options to appear
-await page.waitForSelector('mat-option', { timeout: 60000 });
-
-const options = page.locator('mat-option');
-const count = await options.count();
-
-if (count === 0) {
-  throw new Error('No devices found in dropdown');
-}
-
-// pick random device
-const randomIndex = Math.floor(Math.random() * count);
-
-// 🔥 FORCE CLICK USING JS (bypass overlay)
-await options.nth(randomIndex).evaluate(el => el.click());
-
-await page.waitForTimeout(2000);
-
 
   /* =========================
      DATE RANGE (TODAY)
@@ -134,19 +125,21 @@ await page.waitForTimeout(2000);
 
   await page.locator(
     'mat-datepicker-toggle button'
-  ).first().click();
+  ).first().click({ force: true });
 
-  await page.waitForTimeout(1500);
+  await page.waitForSelector('.mat-calendar-body-cell');
 
   const today = new Date().getDate();
 
-  const todayCell = page.locator('.mat-calendar-body-cell')
-    .filter({ hasText: new RegExp(`^${today}$`) })
-    .first();
+  const todayCell = page.locator(
+    '.mat-calendar-body-cell-content'
+  ).filter({
+    hasText: new RegExp(`^${today}$`)
+  }).first();
 
-  await todayCell.click();
-  await page.waitForTimeout(400);
-  await todayCell.click();
+  await todayCell.click({ force: true });
+  await page.waitForTimeout(300);
+  await todayCell.click({ force: true });
 
   await page.waitForTimeout(1000);
 
@@ -166,12 +159,12 @@ await page.waitForTimeout(2000);
 
   await page.locator(
     'mat-select[formcontrolname="dataSpan"]'
-  ).click();
+  ).click({ force: true });
 
   await page.locator('mat-option')
     .filter({ hasText: new RegExp(randomSpan, 'i') })
     .first()
-    .click();
+    .click({ force: true });
 
   await page.waitForTimeout(1000);
 
@@ -180,7 +173,7 @@ await page.waitForTimeout(2000);
   ========================= */
 
   await page.getByRole('button', { name: /apply/i })
-    .click();
+    .click({ force: true });
 
   await page.waitForTimeout(15000);
 
@@ -189,7 +182,6 @@ await page.waitForTimeout(2000);
   ========================= */
 
   const buildTableHtml = (data) => {
-
     let rows = "";
 
     data.forEach(api => {
@@ -225,11 +217,11 @@ await page.waitForTimeout(2000);
 <head>
 <style>
 body{font-family:Arial;padding:20px;background:#f5f7fb;}
-button{padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:6px;margin-right:10px;cursor:pointer;}
-.card{background:white;padding:15px;margin-top:20px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+button{padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:6px;margin-right:10px;}
+.card{background:white;padding:15px;margin-top:20px;border-radius:10px;}
 .hidden{display:none;}
 table{width:100%;border-collapse:collapse;}
-th,td{border:1px solid #ddd;padding:6px;font-size:12px;vertical-align:top;}
+th,td{border:1px solid #ddd;padding:6px;font-size:12px;}
 th{background:#1f2937;color:white;}
 .ok{background:#e6f4ea;}
 .fail{background:#fdecea;}
@@ -271,4 +263,3 @@ function showDash(){
 
   console.log('✅ Dashboard Flow Completed');
 });
-

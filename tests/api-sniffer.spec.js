@@ -22,9 +22,7 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
         .includes('application/json')) {
         data = JSON.stringify(await response.json(), null, 2);
       }
-    } catch {
-      data = 'Unable to read response';
-    }
+    } catch {}
 
     const api = {
       time: new Date().toLocaleString('en-IN', {
@@ -33,7 +31,7 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
       method: response.request().method(),
       status: response.status(),
       url,
-      data: data.substring(0, 1000)
+      data: data.substring(0,1000)
     };
 
     phase === 'login'
@@ -53,15 +51,14 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
   await page.getByPlaceholder(/password/i)
     .fill(process.env.ENVIZOM_PASSWORD);
 
-  await page.locator('mat-checkbox').click({ force: true });
-  await page.getByRole('button', { name: /agree/i }).click();
-  await page.getByRole('button', { name: /log in/i }).click();
+  await page.locator('mat-checkbox').click({ force:true });
+  await page.getByRole('button',{name:/agree/i}).click();
+  await page.getByRole('button',{name:/log in/i}).click();
 
-  await page.waitForURL(/overview\/map/, { timeout: 90000 });
-  await page.waitForTimeout(5000);
+  await page.waitForURL(/overview\/map/, { timeout:90000 });
 
   /* =========================
-     DASHBOARD MODULE
+     DASHBOARD
   ========================= */
 
   phase = 'dashboard';
@@ -70,152 +67,128 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
     'https://devenvizom.oizom.com/#/dashboard/table/AQ0499001'
   );
 
-  await page.waitForTimeout(6000);
+  await page.waitForTimeout(5000);
 
   /* =========================
-     REMOVE ALL OVERLAYS
+     PERMANENT OVERLAY KILLER
   ========================= */
 
   await page.evaluate(() => {
 
     const kill = () => {
-      document.querySelectorAll(
-        '.transparent-overlay, \
-         .ngx-ui-tour_backdrop, \
-         .cdk-overlay-backdrop'
-      ).forEach(el => el.remove());
+      document.querySelectorAll(`
+        .transparent-overlay,
+        .ngx-ui-tour_backdrop,
+        .cdk-overlay-backdrop
+      `).forEach(el => el.remove());
     };
 
     kill();
 
-    const observer = new MutationObserver(kill);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    new MutationObserver(kill)
+      .observe(document.body,{
+        childList:true,
+        subtree:true
+      });
 
   });
-
-  await page.waitForTimeout(1500);
 
   /* =========================
      DEVICE DROPDOWN
   ========================= */
 
-  const deviceInput = page.locator(
-    'input[formcontrolname="deviceSearch"]'
-  );
+  const deviceInput =
+    page.locator('input[formcontrolname="deviceSearch"]');
 
-  await deviceInput.click({ force: true });
-  await page.waitForTimeout(1000);
+  await deviceInput.click({ force:true });
 
-  await page.waitForSelector('mat-option', { timeout: 60000 });
+  await page.waitForSelector('mat-option');
 
   const options = page.locator('mat-option');
   const count = await options.count();
 
-  if (count === 0) {
-    throw new Error('No devices found');
-  }
+  if (!count) throw new Error('No devices found');
 
-  const randomIndex = Math.floor(Math.random() * count);
+  const randomIndex =
+    Math.floor(Math.random() * count);
 
-  // JS click = bypass overlay problems
   await options.nth(randomIndex)
-    .evaluate(el => el.click());
+    .click({ force:true });
 
-  await page.waitForTimeout(2000);
-
- /* =========================
-   DATA SPAN (ULTRA SAFE)
-========================= */
-
-const spans = [
-  'raw',
-  '900',   // 15 min
-  '1800',  // 30 min
-  '3600'   // 1 hour
-];
-
-const randomSpan =
-  spans[Math.floor(Math.random() * spans.length)];
-
-await page.evaluate((value) => {
-
-  const select = document.querySelector(
-    'mat-select[formcontrolname="dataSpan"]'
-  );
-
-  if (!select) return;
-
-  // trigger angular value change
-  select.dispatchEvent(new Event('click', { bubbles: true }));
-
-  // set internal value (Angular safe way)
-  const input = document.querySelector(
-    '[formcontrolname="dataSpan"]'
-  );
-
-  if (input) {
-    input.value = value;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
-}, randomSpan);
-
-await page.waitForTimeout(1000);
-
+  await page.waitForTimeout(1000);
 
   /* =========================
-     APPLY BUTTON (SAFE)
+     DATA SPAN DROPDOWN (SAFE)
+  ========================= */
+
+  const spans = [
+    'Raw Data',
+    '15 min avg',
+    '30 min avg',
+    '1 hour avg'
+  ];
+
+  const randomSpan =
+    spans[Math.floor(Math.random()*spans.length)];
+
+  await page.locator(
+    'mat-select[formcontrolname="dataSpan"]'
+  ).click({ force:true });
+
+  await page.locator('mat-option')
+    .filter({ hasText:new RegExp(randomSpan,'i') })
+    .first()
+    .click({ force:true });
+
+  await page.waitForTimeout(1000);
+
+  /* =========================
+     APPLY BUTTON
   ========================= */
 
   dashboardApis.length = 0;
 
-  await page.getByRole('button', { name: /apply/i })
-    .click({ force: true });
+  await page.getByRole('button',{name:/apply/i})
+    .click({ force:true });
 
-  // wait for APIs naturally
   await page.waitForTimeout(8000);
 
   console.log(`🔥 Dashboard APIs: ${dashboardApis.length}`);
 
   /* =========================
-     REPORT UI
+     REPORT
   ========================= */
 
-  const buildTable = (data) => {
-    return `
-      <table>
-      <tr>
-        <th>Time</th>
-        <th>Status</th>
-        <th>Method</th>
-        <th>URL</th>
-      </tr>
-      ${data.map(api => `
+  const buildTable = (data) => `
+  <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+    <tr>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Method</th>
+      <th>URL</th>
+    </tr>
+    ${data.map(api=>`
       <tr>
         <td>${api.time}</td>
         <td>${api.status}</td>
         <td>${api.method}</td>
         <td>${api.url}</td>
       </tr>
-      `).join('')}
-      </table>
-    `;
-  };
+    `).join('')}
+  </table>
+  `;
 
   const html = `
 <html>
 <body style="font-family:Arial;padding:20px">
-
 <h1>Envizom API Monitor</h1>
 
-<h2>🔐 Login APIs</h2>
+<h2>🔐 Login APIs (${loginApis.length})</h2>
 ${buildTable(loginApis)}
 
-<h2>📊 Dashboard APIs</h2>
+<br>
+
+<h2>📊 Dashboard APIs (${dashboardApis.length})</h2>
 ${buildTable(dashboardApis)}
 
 </body>
@@ -227,4 +200,3 @@ ${buildTable(dashboardApis)}
   console.log('✅ Flow Completed');
 
 });
-

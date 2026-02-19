@@ -72,6 +72,31 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   await page.waitForTimeout(8000);
 
+  /* =========================
+   AUTO REMOVE TOUR OVERLAY (PERMANENT FIX)
+========================= */
+await page.evaluate(() => {
+
+  const removeTour = () => {
+    document.querySelectorAll('.ngx-ui-tour_backdrop')
+      .forEach(el => el.remove());
+
+    document.querySelectorAll('.cdk-overlay-backdrop')
+      .forEach(el => el.remove());
+  };
+
+  // remove immediately
+  removeTour();
+
+  // keep removing if Angular recreates it
+  const observer = new MutationObserver(removeTour);
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+});
+
+
  /* =========================
    FORCE CLOSE ALL OVERLAYS
 ========================= */
@@ -257,4 +282,5 @@ function showDash(){
 
   console.log('✅ Dashboard Flow Completed');
 });
+
 

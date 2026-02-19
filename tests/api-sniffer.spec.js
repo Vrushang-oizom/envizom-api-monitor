@@ -1,9 +1,10 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 
-test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
+test('Envizom API Monitor → FULL FLOW', async ({ page }) => {
 
   const loginApis = [];
+  const aqiApis = [];
   const dashboardApis = [];
 
   let phase = 'login';
@@ -36,9 +37,9 @@ test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
       data: data.substring(0, 1000)
     };
 
-    phase === 'login'
-      ? loginApis.push(api)
-      : dashboardApis.push(api);
+    if (phase === 'login') loginApis.push(api);
+    else if (phase === 'aqi') aqiApis.push(api);
+    else dashboardApis.push(api);
   });
 
   /* =========================
@@ -62,7 +63,54 @@ test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
   ]);
 
   /* =========================
-     DASHBOARD PAGE
+     OVERVIEW AQI MODULE
+  ========================= */
+
+  phase = 'aqi';
+
+  await page.goto(
+    'https://devenvizom.oizom.com/#/overview/aqi'
+  );
+
+  // remove overlays safely
+  await page.evaluate(() => {
+    const kill = () => {
+      document.querySelectorAll(
+        '.transparent-overlay,.ngx-ui-tour_backdrop,.cdk-overlay-backdrop'
+      ).forEach(el => el.remove());
+    };
+    kill();
+    new MutationObserver(kill).observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  });
+
+  // Device type dropdown
+  const deviceType = page.locator(
+    'input[formcontrolname="deviceType"]'
+  );
+
+  await deviceType.click({ force: true });
+
+  await page.waitForSelector('mat-option');
+
+  await page.locator('mat-option').first()
+    .click({ force: true });
+
+  // Apply AQI
+  const aqiApiWait = page.waitForResponse(resp =>
+    resp.url().includes('/overview') ||
+    resp.url().includes('/devices/data')
+  );
+
+  await page.getByRole('button', { name: /apply/i })
+    .click({ force: true });
+
+  await aqiApiWait;
+
+  /* =========================
+     DASHBOARD MODULE
   ========================= */
 
   phase = 'dashboard';
@@ -70,10 +118,6 @@ test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
   await page.goto(
     'https://devenvizom.oizom.com/#/dashboard/table/AQ0499001'
   );
-
-  /* =========================
-     AUTO REMOVE OVERLAYS
-  ========================= */
 
   await page.evaluate(() => {
     const kill = () => {
@@ -89,7 +133,7 @@ test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
   });
 
   /* =========================
-     DEVICE DROPDOWN
+     RANDOM DEVICE
   ========================= */
 
   const deviceInput = page.locator(
@@ -107,26 +151,27 @@ test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
 
   const randomIndex = Math.floor(Math.random() * count);
 
-  await options.nth(randomIndex).evaluate(el => el.click());
+  await options.nth(randomIndex)
+    .evaluate(el => el.click());
 
   /* =========================
-     DATE RANGE (SAFE INPUT)
+     TODAY DATE INPUT
   ========================= */
 
   const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  const mm = String(today.getMonth()+1).padStart(2,'0');
   const yy = String(today.getFullYear()).slice(-2);
 
-  const dateString = `${dd}/${mm}/${yy}`;
+  const date = `${dd}/${mm}/${yy}`;
 
   await page.locator(
     'input[formcontrolname="startDate"]'
-  ).fill(dateString);
+  ).fill(date);
 
   await page.locator(
     'input[formcontrolname="endDate"]'
-  ).fill(dateString);
+  ).fill(date);
 
   /* =========================
      DATA SPAN RANDOM
@@ -147,15 +192,15 @@ test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
   ).click();
 
   await page.locator('mat-option')
-    .filter({ hasText: new RegExp(randomSpan, 'i') })
+    .filter({ hasText: new RegExp(randomSpan,'i') })
     .first()
     .click({ force: true });
 
   /* =========================
-     APPLY + WAIT FOR API
+     APPLY + WAIT REAL API
   ========================= */
 
-  const apiPromise = page.waitForResponse(resp =>
+  const dashboardApiWait = page.waitForResponse(resp =>
     resp.url().includes('/devices/data') &&
     resp.status() === 200
   );
@@ -163,38 +208,38 @@ test('Envizom API Monitor → ULTRA STABLE FLOW', async ({ page }) => {
   await page.getByRole('button', { name: /apply/i })
     .click({ force: true });
 
-  await apiPromise; // ⭐ REAL WAIT (NO TIMEOUT)
+  await dashboardApiWait;
 
   /* =========================
      REPORT GENERATOR
   ========================= */
 
-  const buildTableHtml = (data) => `
-    <table>
-      <tr>
-        <th>Time</th>
-        <th>Status</th>
-        <th>Method</th>
-        <th>URL</th>
-        <th>Response</th>
-      </tr>
-      ${data.map(api => `
-      <tr class="${api.status === 200 ? 'ok':'fail'}">
+  const buildTable = data => `
+  <table>
+    <tr>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Method</th>
+      <th>URL</th>
+      <th>Response</th>
+    </tr>
+    ${data.map(api=>`
+      <tr class="${api.status===200?'ok':'fail'}">
         <td>${api.time}</td>
         <td>${api.status}</td>
         <td>${api.method}</td>
-        <td class="url-cell">${api.url}</td>
+        <td class="url">${api.url}</td>
         <td><pre>${api.data}</pre></td>
-      </tr>`).join('')}
-    </table>
-  `;
+      </tr>
+    `).join('')}
+  </table>`;
 
   const html = `
 <html>
 <head>
 <style>
 body{font-family:Arial;padding:20px;background:#f5f7fb;}
-button{padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:6px;}
+button{padding:10px 16px;margin-right:10px;background:#2563eb;color:white;border:none;border-radius:6px;}
 .card{background:white;padding:15px;margin-top:20px;border-radius:10px;}
 .hidden{display:none;}
 table{width:100%;border-collapse:collapse;}
@@ -202,7 +247,7 @@ th,td{border:1px solid #ddd;padding:6px;font-size:12px;}
 th{background:#1f2937;color:white;}
 .ok{background:#e6f4ea;}
 .fail{background:#fdecea;}
-.url-cell{word-break:break-all;font-family:monospace;}
+.url{word-break:break-all;font-family:monospace;}
 pre{max-height:180px;overflow:auto;background:#f8fafc;padding:6px;}
 </style>
 </head>
@@ -211,25 +256,20 @@ pre{max-height:180px;overflow:auto;background:#f8fafc;padding:6px;}
 
 <h1>Envizom API Monitor</h1>
 
-<button onclick="showLogin()">🔐 LOGIN APIs</button>
-<button onclick="showDash()">📊 DASHBOARD APIs</button>
+<button onclick="show('login')">🔐 LOGIN APIs</button>
+<button onclick="show('aqi')">🌫 AQI APIs</button>
+<button onclick="show('dash')">📊 DASHBOARD APIs</button>
 
-<div id="login" class="card">
-${buildTableHtml(loginApis)}
-</div>
-
-<div id="dash" class="card hidden">
-${buildTableHtml(dashboardApis)}
-</div>
+<div id="login" class="card">${buildTable(loginApis)}</div>
+<div id="aqi" class="card hidden">${buildTable(aqiApis)}</div>
+<div id="dash" class="card hidden">${buildTable(dashboardApis)}</div>
 
 <script>
-function showLogin(){
- document.getElementById('login').classList.remove('hidden');
- document.getElementById('dash').classList.add('hidden');
-}
-function showDash(){
- document.getElementById('dash').classList.remove('hidden');
- document.getElementById('login').classList.add('hidden');
+function show(id){
+ ['login','aqi','dash'].forEach(x =>
+   document.getElementById(x).classList.add('hidden')
+ );
+ document.getElementById(id).classList.remove('hidden');
 }
 </script>
 
@@ -238,5 +278,5 @@ function showDash(){
 
   fs.writeFileSync('docs/index.html', html);
 
-  console.log('🔥 ULTRA STABLE FLOW COMPLETED');
+  console.log('🔥 FULL FLOW COMPLETED');
 });

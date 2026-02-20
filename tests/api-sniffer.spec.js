@@ -1,4 +1,4 @@
-const { test } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 
 test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
@@ -25,24 +25,20 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
         document.querySelectorAll(
           '.cdk-overlay-backdrop,\
            .ngx-ui-tour_backdrop,\
-           .transparent-overlay,\
-           .cdk-overlay-container'
+           .transparent-overlay'
         ).forEach(e => e.remove());
       };
 
       kill();
 
-      new MutationObserver(kill)
-        .observe(document.body, {
-          childList: true,
-          subtree: true
-        });
+      new MutationObserver(kill).observe(document.body, {
+        childList: true,
+        subtree: true
+      });
     });
   }
 
-  async function wait(ms) {
-    await page.waitForTimeout(ms);
-  }
+  const wait = (ms) => page.waitForTimeout(ms);
 
   /* =================================================
      API CAPTURE ENGINE
@@ -76,7 +72,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
     else if (phase === 'dashboard-table') {
 
-      // ONLY ONE API
+      // ONLY ONE TABLE API
       if (
         api.method === 'GET' &&
         url.includes('/devices/data?')
@@ -88,7 +84,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   });
 
   /* =================================================
-     LOGIN FLOW (ULTRA SAFE)
+     LOGIN FLOW
   ================================================= */
 
   await page.goto('https://devenvizom.oizom.com/#/login');
@@ -110,10 +106,9 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   const loginBtn =
     page.getByRole('button', { name:/log in/i });
 
-  await loginBtn.waitFor({ state:'visible' });
+  await expect(loginBtn).toBeEnabled({ timeout:20000 });
 
-  // force click avoids disabled race condition
-  await loginBtn.click({ force:true });
+  await loginBtn.click();
 
   await page.waitForURL(/overview\/map/, {
     timeout: 90000
@@ -123,12 +118,13 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await wait(5000);
 
   /* =================================================
-     OVERVIEW AQI APIs
+     OVERVIEW AQI
   ================================================= */
 
   phase = 'overview';
 
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
+
   await killOverlays();
   await wait(7000);
 
@@ -144,49 +140,31 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   phase = 'dashboard-widget';
 
-  /* ===== DEVICE DROPDOWN (ENTERPRISE FIX) ===== */
+  /* ===== DEVICE DROPDOWN ===== */
 
-const deviceInput =
-  page.locator('input[formcontrolname="deviceSearch"]');
+  const deviceInput =
+    page.locator('input[formcontrolname="deviceSearch"]');
 
-// click input
-await deviceInput.click({ force:true });
+  await deviceInput.click({ force:true });
 
-// TYPE to trigger autocomplete (VERY IMPORTANT)
-await deviceInput.fill('a');
+  // trigger autocomplete
+  await deviceInput.fill('a');
 
-await page.waitForTimeout(1500);
+  await page.waitForSelector(
+    '.mat-mdc-autocomplete-panel',
+    { timeout:60000 }
+  );
 
-// wait until overlay appears
-await page.waitForSelector(
-  '.mat-mdc-autocomplete-panel',
-  { timeout: 60000 }
-);
+  const options =
+    page.locator('.mat-mdc-autocomplete-panel mat-option');
 
-// options inside panel
-const options =
-  page.locator('.mat-mdc-autocomplete-panel mat-option');
+  const optionCount = await options.count();
 
-const count = await options.count();
+  if (optionCount === 0)
+    throw new Error('No devices loaded');
 
-if (count === 0)
-  throw new Error('No devices loaded');
-
-const randomIndex =
-  Math.floor(Math.random() * count);
-
-// JS click = bypass overlay problems
-await options.nth(randomIndex)
-  .evaluate(el => el.click());
-
-await page.waitForTimeout(3000);
-
-
-  
-
-  const count = await options.count();
   const randomIndex =
-    Math.floor(Math.random() * count);
+    Math.floor(Math.random() * optionCount);
 
   await options.nth(randomIndex)
     .evaluate(el => el.click());
@@ -242,7 +220,7 @@ await page.waitForTimeout(3000);
     dashboardTableApis.length);
 
   /* =================================================
-     REPORT UI (PRO STYLE)
+     REPORT UI
   ================================================= */
 
   const table = data => `
@@ -309,4 +287,3 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
-

@@ -222,9 +222,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   /* =================================================
      REPORT UI
   ================================================= */
-
-  const table = data => `
-  const table = data => `
 const table = (data, section) => `
 <table>
   <tr>
@@ -365,6 +362,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

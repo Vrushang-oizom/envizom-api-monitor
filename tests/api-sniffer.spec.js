@@ -267,6 +267,15 @@ await page.locator(
 
 await wait(1500);
 
+  const clusterPanel = page.locator(
+  '.mat-mdc-autocomplete-panel:not(.mat-mdc-autocomplete-hidden)'
+);
+
+await clusterPanel.first().waitFor({
+  state: 'visible',
+  timeout: 60000
+});
+
 /* options */
 const clusterOptions =
   clusterPanel.locator('mat-option');
@@ -444,6 +453,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

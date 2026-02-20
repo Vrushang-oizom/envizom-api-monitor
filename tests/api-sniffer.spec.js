@@ -1,11 +1,11 @@
-const { test, expect } = require('@playwright/test');
+const { test } = require('@playwright/test');
 const fs = require('fs');
 
-test('Envizom API Monitor → PRO Stable Flow', async ({ page }) => {
+test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
-  /* ===============================
+  /* =================================================
      STORAGE
-  =============================== */
+  ================================================= */
 
   const loginApis = [];
   const overviewApis = [];
@@ -14,40 +14,39 @@ test('Envizom API Monitor → PRO Stable Flow', async ({ page }) => {
 
   let phase = 'login';
 
-  /* ===============================
-   GLOBAL OVERLAY KILLER
-=============================== */
+  /* =================================================
+     ENTERPRISE HELPERS
+  ================================================= */
 
-await page.evaluate(() => {
+  async function killOverlays() {
+    await page.evaluate(() => {
 
-  const killOverlays = () => {
+      const kill = () => {
+        document.querySelectorAll(
+          '.cdk-overlay-backdrop,\
+           .ngx-ui-tour_backdrop,\
+           .transparent-overlay,\
+           .cdk-overlay-container'
+        ).forEach(e => e.remove());
+      };
 
-    document.querySelectorAll(
-      '.cdk-overlay-backdrop, \
-       .ngx-ui-tour_backdrop, \
-       .transparent-overlay, \
-       .cdk-overlay-container'
-    ).forEach(el => el.remove());
+      kill();
 
-  };
+      new MutationObserver(kill)
+        .observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+    });
+  }
 
-  // remove now
-  killOverlays();
+  async function wait(ms) {
+    await page.waitForTimeout(ms);
+  }
 
-  // keep removing forever (Angular recreates them)
-  const observer = new MutationObserver(killOverlays);
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-
-});
-
-
-  /* ===============================
-     API CAPTURE (PHASE BASED)
-  =============================== */
+  /* =================================================
+     API CAPTURE ENGINE
+  ================================================= */
 
   page.on('response', async (response) => {
 
@@ -74,11 +73,10 @@ await page.evaluate(() => {
 
     if (phase === 'login') loginApis.push(api);
     else if (phase === 'overview') overviewApis.push(api);
-    else if (phase === 'dashboard-widget')
-      dashboardWidgetApis.push(api);
-
+    else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
     else if (phase === 'dashboard-table') {
 
+      // ONLY ONE API
       if (
         api.method === 'GET' &&
         url.includes('/devices/data?')
@@ -89,74 +87,70 @@ await page.evaluate(() => {
     }
   });
 
- /* ===============================
-   LOGIN (FINAL STABLE)
-=============================== */
+  /* =================================================
+     LOGIN FLOW (ULTRA SAFE)
+  ================================================= */
 
-await page.goto('https://devenvizom.oizom.com/#/login');
+  await page.goto('https://devenvizom.oizom.com/#/login');
 
-await page.getByPlaceholder(/email/i)
-  .fill(process.env.ENVIZOM_EMAIL);
+  await page.getByPlaceholder(/email/i)
+    .fill(process.env.ENVIZOM_EMAIL);
 
-await page.getByPlaceholder(/password/i)
-  .fill(process.env.ENVIZOM_PASSWORD);
+  await page.getByPlaceholder(/password/i)
+    .fill(process.env.ENVIZOM_PASSWORD);
 
-/* ===== REQUIRED AGREEMENT ===== */
+  const checkbox = page.locator('mat-checkbox');
+  if (await checkbox.count())
+    await checkbox.first().click({ force:true });
 
-// checkbox
-const checkbox = page.locator('mat-checkbox');
-if (await checkbox.count()) {
-  await checkbox.first().click({ force:true });
-}
+  const agreeBtn = page.getByRole('button', { name:/agree/i });
+  if (await agreeBtn.count())
+    await agreeBtn.click({ force:true });
 
-// agree button (if appears)
-const agreeBtn = page.getByRole('button', { name:/agree/i });
-if (await agreeBtn.count()) {
-  await agreeBtn.click({ force:true });
-}
+  const loginBtn =
+    page.getByRole('button', { name:/log in/i });
 
-/* ===== WAIT UNTIL LOGIN ENABLED ===== */
+  await loginBtn.waitFor({ state:'visible' });
 
-const loginBtn =
-  page.getByRole('button', { name:/log in/i });
+  // force click avoids disabled race condition
+  await loginBtn.click({ force:true });
 
-await expect(loginBtn).toBeEnabled({
-  timeout: 20000
-});
+  await page.waitForURL(/overview\/map/, {
+    timeout: 90000
+  });
 
-/* ===== LOGIN ===== */
+  await killOverlays();
+  await wait(5000);
 
-await loginBtn.click();
-
-await page.waitForURL(/overview\/map/, {
-  timeout: 90000
-});
-
-
-  /* ===============================
-     OVERVIEW AQI
-  =============================== */
+  /* =================================================
+     OVERVIEW AQI APIs
+  ================================================= */
 
   phase = 'overview';
-  await page.waitForTimeout(8000);
 
-  /* ===============================
-     DASHBOARD CLICK
-  =============================== */
+  await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
+  await killOverlays();
+  await wait(7000);
 
-  await page.locator('a[title="Dashboard"]').click();
+  /* =================================================
+     DASHBOARD WIDGET VIEW
+  ================================================= */
 
-  await page.waitForTimeout(6000);
+  await page.locator('a[title="Dashboard"]')
+    .evaluate(el => el.click());
 
-  /* ===============================
-     RANDOM DEVICE SELECT
-  =============================== */
+  await killOverlays();
+  await wait(6000);
+
+  phase = 'dashboard-widget';
+
+  /* ===== RANDOM DEVICE ===== */
 
   const deviceInput =
     page.locator('input[formcontrolname="deviceSearch"]');
 
   await deviceInput.click({ force:true });
-  await page.waitForTimeout(1500);
+  await wait(1500);
 
   const options =
     page.locator('.mat-mdc-autocomplete-panel mat-option');
@@ -165,31 +159,28 @@ await page.waitForURL(/overview\/map/, {
 
   const count = await options.count();
   const randomIndex =
-    Math.floor(Math.random()*count);
+    Math.floor(Math.random() * count);
 
   await options.nth(randomIndex)
     .evaluate(el => el.click());
 
-  await page.waitForTimeout(3000);
+  await wait(5000);
 
-  /* ===============================
-     DASHBOARD WIDGET APIs
-  =============================== */
-
-  phase = 'dashboard-widget';
-  await page.waitForTimeout(7000);
-
-  /* ===============================
+  /* =================================================
      DASHBOARD TABLE VIEW
-  =============================== */
+  ================================================= */
 
   await page.goto(
     'https://devenvizom.oizom.com/#/dashboard/table/AQ0499001'
   );
 
-  await page.waitForTimeout(6000);
+  await killOverlays();
+  await wait(6000);
 
-  /* ===== Data Span ===== */
+  phase = 'dashboard-table';
+  dashboardTableApis.length = 0;
+
+  /* ===== DATA SPAN ===== */
 
   const spanSelect =
     page.locator('mat-select[formcontrolname="dataSpan"]');
@@ -206,30 +197,28 @@ await page.waitForURL(/overview\/map/, {
   const randomSpan =
     spans[Math.floor(Math.random()*spans.length)];
 
-  await page.locator('mat-option')
+  await page.locator('.cdk-overlay-pane mat-option')
     .filter({ hasText:new RegExp(randomSpan,'i') })
     .first()
     .evaluate(el => el.click());
 
-  await page.waitForTimeout(1000);
+  await wait(1000);
 
-  /* ===== APPLY BUTTON ===== */
-
-  phase = 'dashboard-table';
-  dashboardTableApis.length = 0;
+  /* ===== APPLY ===== */
 
   await page.getByRole('button',{ name:/apply/i })
     .click({ force:true });
 
-  await page.waitForTimeout(8000);
+  await wait(8000);
 
-  console.log('Table APIs:', dashboardTableApis.length);
+  console.log('🔥 TABLE API CAPTURED:',
+    dashboardTableApis.length);
 
-  /* ===============================
-     REPORT UI
-  =============================== */
+  /* =================================================
+     REPORT UI (PRO STYLE)
+  ================================================= */
 
-  const table = (data) => `
+  const table = data => `
   <table>
     <tr>
       <th>Time</th>
@@ -243,7 +232,7 @@ await page.waitForURL(/overview\/map/, {
         <td>${a.time}</td>
         <td>${a.status}</td>
         <td>${a.method}</td>
-        <td>${a.url}</td>
+        <td class="url">${a.url}</td>
         <td><pre>${a.json}</pre></td>
       </tr>
     `).join('')}
@@ -258,12 +247,13 @@ button{padding:10px 15px;margin:5px;background:#2563eb;color:white;border:none;b
 .card{display:none;background:#111827;padding:15px;margin-top:20px;border-radius:10px}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #374151;padding:6px;font-size:12px}
-pre{max-height:180px;overflow:auto}
+.url{max-width:420px;word-break:break-all}
+pre{max-height:200px;overflow:auto;background:#000;padding:8px}
 </style>
 </head>
 <body>
 
-<h1>🚀 Envizom API Monitor PRO</h1>
+<h1>🚀 Envizom API Monitor — ULTRA ENTERPRISE</h1>
 
 <button onclick="show('login')">Login APIs</button>
 <button onclick="show('overview')">Overview AQI APIs</button>
@@ -278,7 +268,7 @@ pre{max-height:180px;overflow:auto}
 <script>
 function show(id){
  document.querySelectorAll('.card')
-   .forEach(c=>c.style.display='none');
+  .forEach(c=>c.style.display='none');
  document.getElementById(id).style.display='block';
 }
 show('login');
@@ -290,7 +280,5 @@ show('login');
 
   fs.writeFileSync('docs/index.html', html);
 
-  console.log('🔥 PRO FLOW COMPLETED');
+  console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
-
-

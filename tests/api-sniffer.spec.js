@@ -250,34 +250,36 @@ await page
 
 await wait(3000);
 
-/* ===== CLUSTER DROPDOWN (REAL FINAL FIX) ===== */
+/* =================================================
+   CLUSTER DROPDOWN — FINAL ENTERPRISE FIX
+================================================= */
 
 const clusterInput =
   page.locator('input[formcontrolname="clusterName"]');
 
+/* click input */
 await clusterInput.click({ force:true });
 
-/* click dropdown arrow */
+/* CLICK DROPDOWN ARROW BUTTON (REAL ELEMENT) */
 const clusterArrow =
-  clusterInput
-    .locator('xpath=ancestor::mat-form-field')
-    .locator('button');
+  page.locator(
+    'mat-form-field button.mat-mdc-icon-button'
+  ).first();
 
 await clusterArrow.click({ force:true });
 
 await wait(1500);
 
-/* DO NOT wait for visibility */
-/* just wait until options exist in DOM */
-
+/* wait until options exist (NOT visibility) */
 await page.waitForFunction(() => {
   return document.querySelectorAll(
-    '.mat-mdc-autocomplete-panel mat-option'
+    '.cdk-overlay-pane mat-option'
   ).length > 0;
-}, { timeout: 60000 });
+}, { timeout:60000 });
 
+/* options inside overlay */
 const clusterOptions =
-  page.locator('.mat-mdc-autocomplete-panel mat-option');
+  page.locator('.cdk-overlay-pane mat-option');
 
 const clusterCount =
   await clusterOptions.count();
@@ -288,7 +290,7 @@ if (clusterCount === 0)
 const randomCluster =
   Math.floor(Math.random() * clusterCount);
 
-/* JS click bypasses hidden-state problems */
+/* JS click = bypass Angular animation issues */
 await clusterOptions
   .nth(randomCluster)
   .evaluate(el => el.click());
@@ -455,6 +457,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

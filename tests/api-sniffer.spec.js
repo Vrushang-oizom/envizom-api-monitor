@@ -4,51 +4,43 @@ const fs = require('fs');
 test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   const loginApis = [];
-  const dashboardApis = [];
-  const aqiApis = [];
+  const overviewApis = [];
+  const dashboardWidgetApis = [];
+  const dashboardTableApis = [];
 
   let phase = 'login';
 
   /* =========================
      CAPTURE APIs
   ========================= */
+
   page.on('response', async (response) => {
 
     const url = response.url();
-    if (!url.includes('envdevapi.oizom.com')) return;
+    if (!url.startsWith('https://envdevapi.oizom.com/')) return;
 
-    let data = '';
+    let json = '';
     try {
-      if ((response.headers()['content-type'] || '')
-        .includes('application/json')) {
-        data = JSON.stringify(await response.json(), null, 2);
+      if ((response.headers()['content-type'] || '').includes('application/json')) {
+        const data = await response.json();
+        json = JSON.stringify(data, null, 2).substring(0, 1500);
       }
     } catch {
-      data = 'Unable to read response';
+      json = 'Unable to read JSON';
     }
 
     const api = {
-      time: new Date().toLocaleString('en-IN', {
-        timeZone: 'Asia/Kolkata'
-      }),
+      time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       method: response.request().method(),
       status: response.status(),
       url,
-      data: data.substring(0, 1000)
+      json
     };
 
-    if (phase === 'login') {
-  loginApis.push(api);
-}
-else if (phase === 'dashboard') {
-  dashboardApis.push(api);
-}
-else if (phase === 'aqi') {
-  aqiApis.push(api);
-}
-
-    else if (phase === 'dashboard') dashboardApis.push(api);
-    else if (phase === 'aqi') aqiApis.push(api);
+    if (phase === 'login') loginApis.push(api);
+    else if (phase === 'overview') overviewApis.push(api);
+    else if (phase === 'widget') dashboardWidgetApis.push(api);
+    else if (phase === 'table') dashboardTableApis.push(api);
   });
 
   /* =========================
@@ -57,223 +49,128 @@ else if (phase === 'aqi') {
 
   await page.goto('https://devenvizom.oizom.com/#/login');
 
-  await page.getByPlaceholder(/email/i)
-    .fill(process.env.ENVIZOM_EMAIL);
+  await page.getByPlaceholder(/email/i).fill(process.env.ENVIZOM_EMAIL);
+  await page.getByPlaceholder(/password/i).fill(process.env.ENVIZOM_PASSWORD);
 
-  await page.getByPlaceholder(/password/i)
-    .fill(process.env.ENVIZOM_PASSWORD);
-
-  await page.locator('mat-checkbox').click({ force: true });
-  await page.getByRole('button', { name: /agree/i }).click();
   await page.getByRole('button', { name: /log in/i }).click();
 
   await page.waitForURL(/overview\/map/, { timeout: 90000 });
+  await page.waitForTimeout(5000);
 
   /* =========================
-     REMOVE OVERLAYS
+     OVERVIEW AQI
   ========================= */
-  await page.evaluate(() => {
-    const kill = () => {
-      document.querySelectorAll(
-        '.transparent-overlay, .ngx-ui-tour_backdrop, .cdk-overlay-backdrop'
-      ).forEach(el => el.remove());
-    };
-    kill();
-    new MutationObserver(kill).observe(document.body,{
-      childList:true,
-      subtree:true
-    });
-  });
+
+  phase = 'overview';
+
+  await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
+  await page.waitForTimeout(6000);
 
   /* =========================
-     DASHBOARD FLOW
+     DASHBOARD WIDGET VIEW
   ========================= */
 
-  phase = 'dashboard';
+  phase = 'widget';
 
-  await page.goto(
-    'https://devenvizom.oizom.com/#/dashboard/table/AQ0499001'
-  );
+  await page.locator('a[title="Dashboard"]').click();
+  await page.waitForTimeout(4000);
+
+  // default dashboard = widget view
+  await page.waitForTimeout(6000);
+
+  /* =========================
+     SELECT RANDOM DEVICE
+  ========================= */
+
+  await page.locator('input[formcontrolname="deviceSearch"]').click();
+
+  await page.waitForSelector('.cdk-overlay-pane mat-option');
+
+  const devices = page.locator('.cdk-overlay-pane mat-option');
+  const count = await devices.count();
+
+  const randomIndex = Math.floor(Math.random() * count);
+  await devices.nth(randomIndex).click();
 
   await page.waitForTimeout(5000);
 
-  // device dropdown
-  const deviceInput =
-    page.locator('input[formcontrolname="deviceSearch"]');
-
-  await deviceInput.click({ force:true });
-  await page.waitForSelector('mat-option');
-
-  const devices = page.locator('mat-option');
-  const count = await devices.count();
-
-  await devices
-    .nth(Math.floor(Math.random()*count))
-    .evaluate(el => el.click());
-
-  await page.waitForTimeout(1000);
-
-  // data span dropdown
-  const spans = [
-    'Raw data',
-    '15 minute avg',
-    '30 minute avg',
-    '1 hour avg'
-  ];
-
-  const randomSpan =
-    spans[Math.floor(Math.random()*spans.length)];
-
-  await page.locator(
-    'mat-select[formcontrolname="dataSpan"]'
-  ).evaluate(el => el.click());
-
-  await page.waitForSelector('#mat-select-0-panel');
-
-  await page.locator('mat-option')
-    .filter({ hasText:new RegExp(randomSpan,'i') })
-    .first()
-    .evaluate(el => el.click());
-
-  await page.waitForTimeout(1000);
-
-  // APPLY
-  dashboardApis.length = 0;
-
-  await page.getByRole('button',{ name:/apply/i })
-    .click({ force:true });
-
-  await page.waitForTimeout(8000);
-
   /* =========================
-     OVERVIEW AQI FLOW
+     DASHBOARD TABLE VIEW
   ========================= */
 
-  phase = 'aqi';
+  phase = 'table';
 
-  await page.goto(
-    'https://devenvizom.oizom.com/#/overview/aqi'
-  );
+  await page.goto('https://devenvizom.oizom.com/#/dashboard/table');
+  await page.waitForTimeout(7000);
 
-  await page.waitForTimeout(8000);
-
-  // select device type (first option)
-  const deviceType =
-    page.locator('input[formcontrolname="deviceType"]');
-
-  if (await deviceType.count()) {
-    await deviceType.first().click({ force:true });
-    await page.waitForTimeout(1000);
-
-    const opts = page.locator('mat-option');
-    if (await opts.count())
-      await opts.first().evaluate(el=>el.click());
-  }
-
-  await page.waitForTimeout(2000);
+  console.log('Login:', loginApis.length);
+  console.log('Overview:', overviewApis.length);
+  console.log('Widget:', dashboardWidgetApis.length);
+  console.log('Table:', dashboardTableApis.length);
 
   /* =========================
-     REPORT UI
+     BUILD GUI
   ========================= */
 
   const buildTable = (data) => `
-<table>
-  <tr>
-    <th>Time</th>
-    <th>Status</th>
-    <th>Method</th>
-    <th>URL</th>
-    <th>Response JSON</th>
-  </tr>
-
-  ${data.map(a => `
-  <tr class="${a.status===200?'ok':'fail'}">
-    <td>${a.time}</td>
-    <td>${a.status}</td>
-    <td>${a.method}</td>
-    <td class="url">${a.url}</td>
-    <td>
-      <pre class="json-box">${a.data || ''}</pre>
-    </td>
-  </tr>
-  `).join('')}
-</table>
-`;
-
+  <table>
+    <tr>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Method</th>
+      <th>URL</th>
+    </tr>
+    ${data.map(api => `
+      <tr>
+        <td>${api.time}</td>
+        <td>${api.status}</td>
+        <td>${api.method}</td>
+        <td style="max-width:600px;word-break:break-all">${api.url}</td>
+      </tr>
+      <tr>
+        <td colspan="4">
+          <details>
+            <summary>View JSON</summary>
+            <pre>${api.json}</pre>
+          </details>
+        </td>
+      </tr>
+    `).join('')}
+  </table>
+  `;
 
   const html = `
 <html>
 <head>
 <style>
-body{font-family:Arial;background:#f5f7fb;padding:20px;}
-h1{margin-bottom:10px;}
-button{
-padding:10px 18px;
-margin-right:10px;
-border:none;
-background:#2563eb;
-color:white;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-}
-button:hover{background:#1d4ed8;}
-.card{
-background:white;
-padding:15px;
-margin-top:20px;
-border-radius:10px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-.json-box{
-  max-height:220px;
-  overflow:auto;
-  background:#0f172a;
-  color:#22c55e;
-  padding:8px;
-  border-radius:6px;
-  font-size:11px;
-  font-family:monospace;
-  white-space:pre-wrap;
-}
-.hidden{display:none;}
-table{width:100%;border-collapse:collapse;}
-th,td{border:1px solid #ddd;padding:6px;font-size:12px;}
-th{background:#1f2937;color:white;}
-.ok{background:#e6f4ea;}
-.fail{background:#fdecea;}
-.url{word-break:break-all;font-family:monospace;}
+body { font-family: Arial; padding: 20px; background:#111; color:#eee }
+button { padding:10px 15px; margin:5px; cursor:pointer }
+.hidden { display:none }
+table { border-collapse: collapse; width:100%; margin-top:20px }
+th, td { border:1px solid #444; padding:8px }
+th { background:#222 }
+pre { background:#000; padding:10px; overflow:auto }
 </style>
+<script>
+function show(id){
+  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+</script>
 </head>
-
 <body>
 
 <h1>Envizom API Monitor</h1>
 
-<button onclick="show('login')">🔐 LOGIN APIs</button>
-<button onclick="show('dash')">📊 DASHBOARD APIs</button>
-<button onclick="show('aqi')">🌫 OVERVIEW AQI APIs</button>
+<button onclick="show('login')">Login APIs</button>
+<button onclick="show('overview')">Overview AQI APIs</button>
+<button onclick="show('widget')">Dashboard Widget View APIs</button>
+<button onclick="show('table')">Dashboard Table View APIs</button>
 
-<div id="login" class="card">
-${buildTable(loginApis)}
-</div>
-
-<div id="dash" class="card hidden">
-${buildTable(dashboardApis)}
-</div>
-
-<div id="aqi" class="card hidden">
-${buildTable(aqiApis)}
-</div>
-
-<script>
-function show(id){
- ['login','dash','aqi'].forEach(x=>{
-   document.getElementById(x).classList.add('hidden');
- });
- document.getElementById(id).classList.remove('hidden');
-}
-</script>
+<div id="login" class="section">${buildTable(loginApis)}</div>
+<div id="overview" class="section hidden">${buildTable(overviewApis)}</div>
+<div id="widget" class="section hidden">${buildTable(dashboardWidgetApis)}</div>
+<div id="table" class="section hidden">${buildTable(dashboardTableApis)}</div>
 
 </body>
 </html>
@@ -281,7 +178,4 @@ function show(id){
 
   fs.writeFileSync('docs/index.html', html);
 
-  console.log('🔥 FULL FLOW COMPLETED');
 });
-
-

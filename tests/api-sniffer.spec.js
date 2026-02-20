@@ -224,37 +224,105 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   ================================================= */
 
   const table = data => `
-  <table>
+  const table = data => `
+<table>
+  <tr>
+    <th>Time</th>
+    <th>Status</th>
+    <th>Method</th>
+    <th>URL</th>
+    <th>Response</th>
+  </tr>
+
+  ${data.map((a,i)=>`
     <tr>
-      <th>Time</th>
-      <th>Status</th>
-      <th>Method</th>
-      <th>URL</th>
-      <th>JSON</th>
+      <td>${a.time}</td>
+      <td>${a.status}</td>
+      <td>${a.method}</td>
+      <td class="url">${a.url}</td>
+
+      <td>
+        <button class="json-btn"
+          onclick="toggleJson('json-${phase}-${i}')">
+          View JSON
+        </button>
+
+        <pre id="json-${phase}-${i}" class="json-box">
+${a.json}
+        </pre>
+      </td>
     </tr>
-    ${data.map(a=>`
-      <tr>
-        <td>${a.time}</td>
-        <td>${a.status}</td>
-        <td>${a.method}</td>
-        <td class="url">${a.url}</td>
-        <td><pre>${a.json}</pre></td>
-      </tr>
-    `).join('')}
-  </table>`;
+  `).join('')}
+</table>`;
+
 
   const html = `
 <html>
 <head>
 <style>
-body{font-family:Arial;background:#0f172a;color:white;padding:20px}
-button{padding:10px 15px;margin:5px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer}
-.card{display:none;background:#111827;padding:15px;margin-top:20px;border-radius:10px}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #374151;padding:6px;font-size:12px}
-.url{max-width:420px;word-break:break-all}
-pre{max-height:200px;overflow:auto;background:#000;padding:8px}
+body{
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+
+button{
+  padding:10px 15px;
+  margin:5px;
+  background:#2563eb;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.card{
+  display:none;
+  background:#111827;
+  padding:15px;
+  margin-top:20px;
+  border-radius:10px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  border:1px solid #374151;
+  padding:6px;
+  font-size:12px;
+  vertical-align:top;
+}
+
+.url{
+  max-width:420px;
+  word-break:break-all;
+}
+
+.json-btn{
+  background:#16a34a;
+  font-size:11px;
+  padding:5px 10px;
+}
+
+.json-btn:hover{
+  background:#15803d;
+}
+
+.json-box{
+  display:none;
+  max-height:220px;
+  overflow:auto;
+  background:#000;
+  padding:8px;
+  margin-top:6px;
+  border-radius:6px;
+}
 </style>
+
 </head>
 <body>
 
@@ -276,8 +344,16 @@ function show(id){
   .forEach(c=>c.style.display='none');
  document.getElementById(id).style.display='block';
 }
+
+function toggleJson(id){
+ const el = document.getElementById(id);
+ el.style.display =
+   el.style.display === 'block' ? 'none' : 'block';
+}
+
 show('login');
 </script>
+
 
 </body>
 </html>
@@ -287,4 +363,5 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 

@@ -48,45 +48,52 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   page.on('response', async (response) => {
 
-    const url = response.url();
-    if (!url.startsWith('https://envdevapi.oizom.com/')) return;
+  const url = response.url();
+  if (!url.startsWith('https://envdevapi.oizom.com/')) return;
 
-    let json = '';
-    try {
-      if ((response.headers()['content-type'] || '')
-        .includes('application/json')) {
-        json = JSON.stringify(await response.json(), null, 2);
-      }
-    } catch {}
-
-    const api = {
-      time: new Date().toLocaleString('en-IN', {
-        timeZone: 'Asia/Kolkata'
-      }),
-      method: response.request().method(),
-      status: response.status(),
-      url,
-      json: json.substring(0, 1500)
-    };
-
-    if (phase === 'login') loginApis.push(api);
-    else if (phase === 'overview') overviewApis.push(api);
-    else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
-    else if (phase === 'dashboard-table'){}
-    else if (phase === 'cluster-data') {
-    clusterDataViewApis.push(api);
-}{
-
-      // ONLY ONE TABLE API
-      if (
-        api.method === 'GET' &&
-        url.includes('/devices/data?')
-      ) {
-        dashboardTableApis.length = 0;
-        dashboardTableApis.push(api);
-      }
+  let json = '';
+  try {
+    if ((response.headers()['content-type'] || '')
+      .includes('application/json')) {
+      json = JSON.stringify(await response.json(), null, 2);
     }
-  });
+  } catch {}
+
+  const api = {
+    time: new Date().toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata'
+    }),
+    method: response.request().method(),
+    status: response.status(),
+    url,
+    json: json.substring(0, 1500)
+  };
+
+  if (phase === 'login') {
+    loginApis.push(api);
+  }
+  else if (phase === 'overview') {
+    overviewApis.push(api);
+  }
+  else if (phase === 'dashboard-widget') {
+    dashboardWidgetApis.push(api);
+  }
+  else if (phase === 'dashboard-table') {
+
+    // ONLY ONE TABLE API
+    if (
+      api.method === 'GET' &&
+      url.includes('/devices/data?')
+    ) {
+      dashboardTableApis.length = 0;
+      dashboardTableApis.push(api);
+    }
+  }
+  else if (phase === 'cluster-data') {
+    clusterDataViewApis.push(api);
+  }
+});
+
 
   /* =================================================
      LOGIN FLOW
@@ -259,16 +266,6 @@ await page.locator(
  .click({ force:true });
 
 await wait(1500);
-
-/* wait until panel becomes VISIBLE */
-const clusterPanel = page.locator(
-  '.mat-mdc-autocomplete-panel:not(.mat-mdc-autocomplete-hidden)'
-);
-
-await clusterPanel.first().waitFor({
-  state: 'visible',
-  timeout: 60000
-});
 
 /* options */
 const clusterOptions =
@@ -463,6 +460,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

@@ -225,6 +225,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   const table = data => `
   const table = data => `
+const table = (data, section) => `
 <table>
   <tr>
     <th>Time</th>
@@ -243,17 +244,18 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
       <td>
         <button class="json-btn"
-          onclick="toggleJson('json-${phase}-${i}')">
+          onclick="toggleJson('json-${section}-${i}')">
           View JSON
         </button>
 
-        <pre id="json-${phase}-${i}" class="json-box">
+        <pre id="json-${section}-${i}" class="json-box">
 ${a.json}
         </pre>
       </td>
     </tr>
   `).join('')}
 </table>`;
+
 
 
   const html = `
@@ -333,10 +335,10 @@ th,td{
 <button onclick="show('widget')">Dashboard Widget APIs</button>
 <button onclick="show('table')">Dashboard Table View APIs</button>
 
-<div id="login" class="card">${table(loginApis)}</div>
-<div id="overview" class="card">${table(overviewApis)}</div>
-<div id="widget" class="card">${table(dashboardWidgetApis)}</div>
-<div id="table" class="card">${table(dashboardTableApis)}</div>
+<div id="login" class="card">${table(loginApis,'login')}</div>
+<div id="overview" class="card">${table(overviewApis,'overview')}</div>
+<div id="widget" class="card">${table(dashboardWidgetApis,'widget')}</div>
+<div id="table" class="card">${table(dashboardTableApis,'table')}</div>
 
 <script>
 function show(id){
@@ -363,5 +365,6 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 

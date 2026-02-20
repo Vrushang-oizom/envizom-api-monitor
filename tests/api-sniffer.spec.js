@@ -243,11 +243,6 @@ await page
 
 await wait(3000);
 
-/* ===== CLUSTER DROPDOWN ===== */
-
-const clusterInput =
-  page.locator('input[formcontrolname="clusterName"]');
-
 /* ===== CLUSTER DROPDOWN (REAL FIX) ===== */
 
 const clusterInput =
@@ -470,6 +465,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

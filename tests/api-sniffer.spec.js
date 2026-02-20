@@ -15,27 +15,35 @@ test('Envizom API Monitor → PRO Stable Flow', async ({ page }) => {
   let phase = 'login';
 
   /* ===============================
-     GLOBAL OVERLAY KILLER
-  =============================== */
+   GLOBAL OVERLAY KILLER
+=============================== */
 
-  await page.addInitScript(() => {
+await page.evaluate(() => {
 
-    const kill = () => {
-      document.querySelectorAll(
-        '.transparent-overlay, \
-         .ngx-ui-tour_backdrop, \
-         .cdk-overlay-backdrop'
-      ).forEach(e => e.remove());
-    };
+  const killOverlays = () => {
 
-    const obs = new MutationObserver(kill);
-    obs.observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
+    document.querySelectorAll(
+      '.cdk-overlay-backdrop, \
+       .ngx-ui-tour_backdrop, \
+       .transparent-overlay, \
+       .cdk-overlay-container'
+    ).forEach(el => el.remove());
 
-    setInterval(kill, 1000);
+  };
+
+  // remove now
+  killOverlays();
+
+  // keep removing forever (Angular recreates them)
+  const observer = new MutationObserver(killOverlays);
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
   });
+
+});
+
 
   /* ===============================
      API CAPTURE (PHASE BASED)
@@ -284,4 +292,5 @@ show('login');
 
   console.log('🔥 PRO FLOW COMPLETED');
 });
+
 

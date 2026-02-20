@@ -258,7 +258,7 @@ pre{max-height:200px;overflow:auto;background:#000;padding:8px}
 </head>
 <body>
 
-<h1>🚀 Envizom API Monitor — ULTRA ENTERPRISE</h1>
+<h1>Envizom API Monitor</h1>
 
 <button onclick="show('login')">Login APIs</button>
 <button onclick="show('overview')">Overview AQI APIs</button>
@@ -287,3 +287,4 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+

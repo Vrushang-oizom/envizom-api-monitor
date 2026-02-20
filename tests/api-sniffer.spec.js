@@ -1,7 +1,11 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 
-test('Envizom API Monitor → Full Flow', async ({ page }) => {
+test('Envizom API Monitor → PRO Stable Flow', async ({ page }) => {
+
+  /* ===============================
+     STORAGE
+  =============================== */
 
   const loginApis = [];
   const overviewApis = [];
@@ -10,9 +14,32 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
   let phase = 'login';
 
-  /* =========================
-     CAPTURE APIs
-  ========================= */
+  /* ===============================
+     GLOBAL OVERLAY KILLER
+  =============================== */
+
+  await page.addInitScript(() => {
+
+    const kill = () => {
+      document.querySelectorAll(
+        '.transparent-overlay, \
+         .ngx-ui-tour_backdrop, \
+         .cdk-overlay-backdrop'
+      ).forEach(e => e.remove());
+    };
+
+    const obs = new MutationObserver(kill);
+    obs.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+
+    setInterval(kill, 1000);
+  });
+
+  /* ===============================
+     API CAPTURE (PHASE BASED)
+  =============================== */
 
   page.on('response', async (response) => {
 
@@ -21,183 +48,209 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
 
     let json = '';
     try {
-      if ((response.headers()['content-type'] || '').includes('application/json')) {
-        const data = await response.json();
-        json = JSON.stringify(data, null, 2).substring(0, 1500);
+      if ((response.headers()['content-type'] || '')
+        .includes('application/json')) {
+        json = JSON.stringify(await response.json(), null, 2);
       }
-    } catch {
-      json = 'Unable to read JSON';
-    }
+    } catch {}
 
     const api = {
-      time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      time: new Date().toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata'
+      }),
       method: response.request().method(),
       status: response.status(),
       url,
-      json
+      json: json.substring(0, 1500)
     };
 
     if (phase === 'login') loginApis.push(api);
     else if (phase === 'overview') overviewApis.push(api);
-    else if (phase === 'widget') dashboardWidgetApis.push(api);
-    else if (phase === 'table') dashboardTableApis.push(api);
+    else if (phase === 'dashboard-widget')
+      dashboardWidgetApis.push(api);
+
+    else if (phase === 'dashboard-table') {
+
+      if (
+        api.method === 'GET' &&
+        url.includes('/devices/data?')
+      ) {
+        dashboardTableApis.length = 0;
+        dashboardTableApis.push(api);
+      }
+    }
   });
 
-/* =========================
-   LOGIN (STABLE VERSION)
-========================= */
+  /* ===============================
+     LOGIN
+  =============================== */
 
-await page.goto('https://devenvizom.oizom.com/#/login');
+  await page.goto('https://devenvizom.oizom.com/#/login');
 
-await page.getByPlaceholder(/email/i)
-  .fill(process.env.ENVIZOM_EMAIL);
+  await page.getByPlaceholder(/email/i)
+    .fill(process.env.ENVIZOM_EMAIL);
 
-await page.getByPlaceholder(/password/i)
-  .fill(process.env.ENVIZOM_PASSWORD);
+  await page.getByPlaceholder(/password/i)
+    .fill(process.env.ENVIZOM_PASSWORD);
 
-// Accept checkbox if present
-const checkbox = page.locator('mat-checkbox');
-if (await checkbox.count()) {
-  await checkbox.first().click({ force: true });
-}
+  const loginBtn =
+    page.getByRole('button', { name:/log in/i });
 
-// click agree if popup appears
-const agreeBtn = page.getByRole('button', { name: /agree/i });
-if (await agreeBtn.count()) {
-  await agreeBtn.first().click({ force: true });
-}
+  await expect(loginBtn).toBeEnabled();
+  await loginBtn.click();
 
-// WAIT until login enabled
-const loginBtn = page.getByRole('button', { name: /log in/i });
+  await page.waitForURL(/overview\/map/, { timeout:90000 });
 
-await loginBtn.waitFor({
-  state: 'visible',
-  timeout: 30000
-});
-
-await expect(loginBtn).toBeEnabled();
-
-// click login
-await loginBtn.click();
-
-await page.waitForURL(/overview\/map/, { timeout: 90000 });
-await page.waitForTimeout(4000);
-
-
-  /* =========================
+  /* ===============================
      OVERVIEW AQI
-  ========================= */
+  =============================== */
 
   phase = 'overview';
+  await page.waitForTimeout(8000);
 
-  await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
-  await page.waitForTimeout(6000);
-
-  /* =========================
-     DASHBOARD WIDGET VIEW
-  ========================= */
-
-  phase = 'widget';
+  /* ===============================
+     DASHBOARD CLICK
+  =============================== */
 
   await page.locator('a[title="Dashboard"]').click();
-  await page.waitForTimeout(4000);
 
-  // default dashboard = widget view
   await page.waitForTimeout(6000);
 
-  /* =========================
-     SELECT RANDOM DEVICE
-  ========================= */
+  /* ===============================
+     RANDOM DEVICE SELECT
+  =============================== */
 
-  await page.locator('input[formcontrolname="deviceSearch"]').click();
+  const deviceInput =
+    page.locator('input[formcontrolname="deviceSearch"]');
 
-  await page.waitForSelector('.cdk-overlay-pane mat-option');
+  await deviceInput.click({ force:true });
+  await page.waitForTimeout(1500);
 
-  const devices = page.locator('.cdk-overlay-pane mat-option');
-  const count = await devices.count();
+  const options =
+    page.locator('.mat-mdc-autocomplete-panel mat-option');
 
-  const randomIndex = Math.floor(Math.random() * count);
-  await devices.nth(randomIndex).click();
+  await options.first().waitFor();
 
-  await page.waitForTimeout(5000);
+  const count = await options.count();
+  const randomIndex =
+    Math.floor(Math.random()*count);
 
-  /* =========================
-     DASHBOARD TABLE VIEW
-  ========================= */
+  await options.nth(randomIndex)
+    .evaluate(el => el.click());
 
-  phase = 'table';
+  await page.waitForTimeout(3000);
 
-  await page.goto('https://devenvizom.oizom.com/#/dashboard/table');
+  /* ===============================
+     DASHBOARD WIDGET APIs
+  =============================== */
+
+  phase = 'dashboard-widget';
   await page.waitForTimeout(7000);
 
-  console.log('Login:', loginApis.length);
-  console.log('Overview:', overviewApis.length);
-  console.log('Widget:', dashboardWidgetApis.length);
-  console.log('Table:', dashboardTableApis.length);
+  /* ===============================
+     DASHBOARD TABLE VIEW
+  =============================== */
 
-  /* =========================
-     BUILD GUI
-  ========================= */
+  await page.goto(
+    'https://devenvizom.oizom.com/#/dashboard/table/AQ0499001'
+  );
 
-  const buildTable = (data) => `
+  await page.waitForTimeout(6000);
+
+  /* ===== Data Span ===== */
+
+  const spanSelect =
+    page.locator('mat-select[formcontrolname="dataSpan"]');
+
+  await spanSelect.click({ force:true });
+
+  const spans = [
+    'Raw data',
+    '15 minute avg',
+    '30 minute avg',
+    '1 hour avg'
+  ];
+
+  const randomSpan =
+    spans[Math.floor(Math.random()*spans.length)];
+
+  await page.locator('mat-option')
+    .filter({ hasText:new RegExp(randomSpan,'i') })
+    .first()
+    .evaluate(el => el.click());
+
+  await page.waitForTimeout(1000);
+
+  /* ===== APPLY BUTTON ===== */
+
+  phase = 'dashboard-table';
+  dashboardTableApis.length = 0;
+
+  await page.getByRole('button',{ name:/apply/i })
+    .click({ force:true });
+
+  await page.waitForTimeout(8000);
+
+  console.log('Table APIs:', dashboardTableApis.length);
+
+  /* ===============================
+     REPORT UI
+  =============================== */
+
+  const table = (data) => `
   <table>
     <tr>
       <th>Time</th>
       <th>Status</th>
       <th>Method</th>
       <th>URL</th>
+      <th>JSON</th>
     </tr>
-    ${data.map(api => `
+    ${data.map(a=>`
       <tr>
-        <td>${api.time}</td>
-        <td>${api.status}</td>
-        <td>${api.method}</td>
-        <td style="max-width:600px;word-break:break-all">${api.url}</td>
-      </tr>
-      <tr>
-        <td colspan="4">
-          <details>
-            <summary>View JSON</summary>
-            <pre>${api.json}</pre>
-          </details>
-        </td>
+        <td>${a.time}</td>
+        <td>${a.status}</td>
+        <td>${a.method}</td>
+        <td>${a.url}</td>
+        <td><pre>${a.json}</pre></td>
       </tr>
     `).join('')}
-  </table>
-  `;
+  </table>`;
 
   const html = `
 <html>
 <head>
 <style>
-body { font-family: Arial; padding: 20px; background:#111; color:#eee }
-button { padding:10px 15px; margin:5px; cursor:pointer }
-.hidden { display:none }
-table { border-collapse: collapse; width:100%; margin-top:20px }
-th, td { border:1px solid #444; padding:8px }
-th { background:#222 }
-pre { background:#000; padding:10px; overflow:auto }
+body{font-family:Arial;background:#0f172a;color:white;padding:20px}
+button{padding:10px 15px;margin:5px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer}
+.card{display:none;background:#111827;padding:15px;margin-top:20px;border-radius:10px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #374151;padding:6px;font-size:12px}
+pre{max-height:180px;overflow:auto}
 </style>
-<script>
-function show(id){
-  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
-</script>
 </head>
 <body>
 
-<h1>Envizom API Monitor</h1>
+<h1>🚀 Envizom API Monitor PRO</h1>
 
 <button onclick="show('login')">Login APIs</button>
 <button onclick="show('overview')">Overview AQI APIs</button>
-<button onclick="show('widget')">Dashboard Widget View APIs</button>
+<button onclick="show('widget')">Dashboard Widget APIs</button>
 <button onclick="show('table')">Dashboard Table View APIs</button>
 
-<div id="login" class="section">${buildTable(loginApis)}</div>
-<div id="overview" class="section hidden">${buildTable(overviewApis)}</div>
-<div id="widget" class="section hidden">${buildTable(dashboardWidgetApis)}</div>
-<div id="table" class="section hidden">${buildTable(dashboardTableApis)}</div>
+<div id="login" class="card">${table(loginApis)}</div>
+<div id="overview" class="card">${table(overviewApis)}</div>
+<div id="widget" class="card">${table(dashboardWidgetApis)}</div>
+<div id="table" class="card">${table(dashboardTableApis)}</div>
+
+<script>
+function show(id){
+ document.querySelectorAll('.card')
+   .forEach(c=>c.style.display='none');
+ document.getElementById(id).style.display='block';
+}
+show('login');
+</script>
 
 </body>
 </html>
@@ -205,6 +258,5 @@ function show(id){
 
   fs.writeFileSync('docs/index.html', html);
 
+  console.log('🔥 PRO FLOW COMPLETED');
 });
-
-

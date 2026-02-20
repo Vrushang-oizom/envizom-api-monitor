@@ -43,19 +43,46 @@ test('Envizom API Monitor → Full Flow', async ({ page }) => {
     else if (phase === 'table') dashboardTableApis.push(api);
   });
 
-  /* =========================
-     LOGIN
-  ========================= */
+/* =========================
+   LOGIN (STABLE VERSION)
+========================= */
 
-  await page.goto('https://devenvizom.oizom.com/#/login');
+await page.goto('https://devenvizom.oizom.com/#/login');
 
-  await page.getByPlaceholder(/email/i).fill(process.env.ENVIZOM_EMAIL);
-  await page.getByPlaceholder(/password/i).fill(process.env.ENVIZOM_PASSWORD);
+await page.getByPlaceholder(/email/i)
+  .fill(process.env.ENVIZOM_EMAIL);
 
-  await page.getByRole('button', { name: /log in/i }).click();
+await page.getByPlaceholder(/password/i)
+  .fill(process.env.ENVIZOM_PASSWORD);
 
-  await page.waitForURL(/overview\/map/, { timeout: 90000 });
-  await page.waitForTimeout(5000);
+// Accept checkbox if present
+const checkbox = page.locator('mat-checkbox');
+if (await checkbox.count()) {
+  await checkbox.first().click({ force: true });
+}
+
+// click agree if popup appears
+const agreeBtn = page.getByRole('button', { name: /agree/i });
+if (await agreeBtn.count()) {
+  await agreeBtn.first().click({ force: true });
+}
+
+// WAIT until login enabled
+const loginBtn = page.getByRole('button', { name: /log in/i });
+
+await loginBtn.waitFor({
+  state: 'visible',
+  timeout: 30000
+});
+
+await expect(loginBtn).toBeEnabled();
+
+// click login
+await loginBtn.click();
+
+await page.waitForURL(/overview\/map/, { timeout: 90000 });
+await page.waitForTimeout(4000);
+
 
   /* =========================
      OVERVIEW AQI
@@ -179,3 +206,4 @@ function show(id){
   fs.writeFileSync('docs/index.html', html);
 
 });
+

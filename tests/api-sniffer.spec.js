@@ -144,18 +144,45 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   phase = 'dashboard-widget';
 
-  /* ===== RANDOM DEVICE ===== */
+  /* ===== DEVICE DROPDOWN (ENTERPRISE FIX) ===== */
 
-  const deviceInput =
-    page.locator('input[formcontrolname="deviceSearch"]');
+const deviceInput =
+  page.locator('input[formcontrolname="deviceSearch"]');
 
-  await deviceInput.click({ force:true });
-  await wait(1500);
+// click input
+await deviceInput.click({ force:true });
 
-  const options =
-    page.locator('.mat-mdc-autocomplete-panel mat-option');
+// TYPE to trigger autocomplete (VERY IMPORTANT)
+await deviceInput.fill('a');
 
-  await options.first().waitFor();
+await page.waitForTimeout(1500);
+
+// wait until overlay appears
+await page.waitForSelector(
+  '.mat-mdc-autocomplete-panel',
+  { timeout: 60000 }
+);
+
+// options inside panel
+const options =
+  page.locator('.mat-mdc-autocomplete-panel mat-option');
+
+const count = await options.count();
+
+if (count === 0)
+  throw new Error('No devices loaded');
+
+const randomIndex =
+  Math.floor(Math.random() * count);
+
+// JS click = bypass overlay problems
+await options.nth(randomIndex)
+  .evaluate(el => el.click());
+
+await page.waitForTimeout(3000);
+
+
+  
 
   const count = await options.count();
   const randomIndex =
@@ -282,3 +309,4 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+

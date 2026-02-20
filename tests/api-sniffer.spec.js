@@ -286,22 +286,6 @@ await clusterOptions
 
 await wait(2000);
 
-
-const clusterOptions =
-  page.locator('.mat-mdc-autocomplete-panel mat-option');
-
-if (clusterCount === 0)
-  throw new Error('No cluster options found');
-
-const randomCluster =
-  Math.floor(Math.random() * clusterCount);
-
-await clusterOptions
-  .nth(randomCluster)
-  .evaluate(el => el.click());
-
-await wait(2000);
-
 /* ===== APPLY BUTTON ===== */
 
 await page.getByRole('button', { name:/apply/i })
@@ -460,6 +444,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

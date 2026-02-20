@@ -250,30 +250,35 @@ await page
 
 await wait(3000);
 
-/* ===== CLUSTER DROPDOWN (FINAL FIX) ===== */
+/* ===== CLUSTER DROPDOWN (ENTERPRISE FINAL) ===== */
 
 const clusterInput =
   page.locator('input[formcontrolname="clusterName"]');
 
-// click input
+/* wait until input is really ready */
+await expect(clusterInput).toBeVisible({ timeout: 60000 });
+await expect(clusterInput).toBeEnabled({ timeout: 60000 });
+
+/* click input */
 await clusterInput.click({ force:true });
 
-// TYPE to trigger autocomplete (THIS IS THE REAL FIX)
-await clusterInput.fill('a');
+/* IMPORTANT: use keyboard instead of fill */
+await page.keyboard.type('a');
 
 await wait(2000);
 
-/* directly grab options (no panel wait) */
+/* wait until options actually exist */
+await page.waitForFunction(() => {
+  return document.querySelectorAll(
+    '.mat-mdc-autocomplete-panel mat-option'
+  ).length > 0;
+}, { timeout: 60000 });
+
 const clusterOptions =
   page.locator('.mat-mdc-autocomplete-panel mat-option');
 
-/* wait until at least one option exists */
-await clusterOptions.first().waitFor({
-  state: 'visible',
-  timeout: 60000
-});
-
-const clusterCount = await clusterOptions.count();
+const clusterCount =
+  await clusterOptions.count();
 
 if (clusterCount === 0)
   throw new Error('No cluster options found');
@@ -445,6 +450,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

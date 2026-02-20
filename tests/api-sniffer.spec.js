@@ -248,13 +248,52 @@ await wait(3000);
 const clusterInput =
   page.locator('input[formcontrolname="clusterName"]');
 
-await clusterInput.click({ force:true });
-await clusterInput.fill('a');
+/* ===== CLUSTER DROPDOWN (REAL FIX) ===== */
 
-await page.waitForSelector(
-  '.mat-mdc-autocomplete-panel',
-  { timeout:60000 }
+const clusterInput =
+  page.locator('input[formcontrolname="clusterName"]');
+
+// click input first
+await clusterInput.click({ force:true });
+
+// click dropdown arrow (IMPORTANT)
+await page.locator(
+  'input[formcontrolname="clusterName"]'
+).locator('xpath=ancestor::mat-form-field')
+ .locator('button')
+ .click({ force:true });
+
+await wait(1500);
+
+/* wait until panel becomes VISIBLE */
+const clusterPanel = page.locator(
+  '.mat-mdc-autocomplete-panel:not(.mat-mdc-autocomplete-hidden)'
 );
+
+await clusterPanel.first().waitFor({
+  state: 'visible',
+  timeout: 60000
+});
+
+/* options */
+const clusterOptions =
+  clusterPanel.locator('mat-option');
+
+const clusterCount =
+  await clusterOptions.count();
+
+if (clusterCount === 0)
+  throw new Error('No cluster options found');
+
+const randomCluster =
+  Math.floor(Math.random() * clusterCount);
+
+await clusterOptions
+  .nth(randomCluster)
+  .evaluate(el => el.click());
+
+await wait(2000);
+
 
 const clusterOptions =
   page.locator('.mat-mdc-autocomplete-panel mat-option');
@@ -431,6 +470,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

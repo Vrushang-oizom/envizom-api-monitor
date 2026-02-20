@@ -11,13 +11,11 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   const overviewApis = [];
   const dashboardWidgetApis = [];
   const dashboardTableApis = [];
-  const clusterDataViewApis = [];
-
 
   let phase = 'login';
 
   /* =================================================
-     ENTERPRISE HELPERS
+     HELPERS
   ================================================= */
 
   async function killOverlays() {
@@ -48,52 +46,42 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   page.on('response', async (response) => {
 
-  const url = response.url();
-  if (!url.startsWith('https://envdevapi.oizom.com/')) return;
+    const url = response.url();
+    if (!url.startsWith('https://envdevapi.oizom.com/')) return;
 
-  let json = '';
-  try {
-    if ((response.headers()['content-type'] || '')
-      .includes('application/json')) {
-      json = JSON.stringify(await response.json(), null, 2);
+    let json = '';
+    try {
+      if ((response.headers()['content-type'] || '')
+        .includes('application/json')) {
+        json = JSON.stringify(await response.json(), null, 2);
+      }
+    } catch {}
+
+    const api = {
+      time: new Date().toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata'
+      }),
+      method: response.request().method(),
+      status: response.status(),
+      url,
+      json: json.substring(0, 1500)
+    };
+
+    if (phase === 'login') loginApis.push(api);
+    else if (phase === 'overview') overviewApis.push(api);
+    else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
+    else if (phase === 'dashboard-table') {
+
+      // ONLY ONE TABLE API
+      if (
+        api.method === 'GET' &&
+        url.includes('/devices/data?')
+      ) {
+        dashboardTableApis.length = 0;
+        dashboardTableApis.push(api);
+      }
     }
-  } catch {}
-
-  const api = {
-    time: new Date().toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata'
-    }),
-    method: response.request().method(),
-    status: response.status(),
-    url,
-    json: json.substring(0, 1500)
-  };
-
-  if (phase === 'login') {
-    loginApis.push(api);
-  }
-  else if (phase === 'overview') {
-    overviewApis.push(api);
-  }
-  else if (phase === 'dashboard-widget') {
-    dashboardWidgetApis.push(api);
-  }
-  else if (phase === 'dashboard-table') {
-
-    // ONLY ONE TABLE API
-    if (
-      api.method === 'GET' &&
-      url.includes('/devices/data?')
-    ) {
-      dashboardTableApis.length = 0;
-      dashboardTableApis.push(api);
-    }
-  }
-  else if (phase === 'cluster-data') {
-    clusterDataViewApis.push(api);
-  }
-});
-
+  });
 
   /* =================================================
      LOGIN FLOW
@@ -158,8 +146,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     page.locator('input[formcontrolname="deviceSearch"]');
 
   await deviceInput.click({ force:true });
-
-  // trigger autocomplete
   await deviceInput.fill('a');
 
   await page.waitForSelector(
@@ -197,8 +183,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   phase = 'dashboard-table';
   dashboardTableApis.length = 0;
 
-  /* ===== DATA SPAN ===== */
-
   const spanSelect =
     page.locator('mat-select[formcontrolname="dataSpan"]');
 
@@ -221,8 +205,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   await wait(1000);
 
-  /* ===== APPLY ===== */
-
   await page.getByRole('button',{ name:/apply/i })
     .click({ force:true });
 
@@ -232,186 +214,49 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     dashboardTableApis.length);
 
   /* =================================================
-   CLUSTER → DATA VIEW
-================================================= */
-
-phase = 'cluster-data';
-
-await page.goto('https://devenvizom.oizom.com/#/cluster');
-await killOverlays();
-await wait(6000);
-
-/* ===== CLICK DATA VIEW BUTTON ===== */
-
-await page
-  .locator('button:has-text("Data View")')
-  .first()
-  .click({ force:true });
-
-await wait(3000);
-
-/* =================================================
-   CLUSTER DROPDOWN — FINAL ENTERPRISE FIX
-================================================= */
-
-const clusterInput =
-  page.locator('input[formcontrolname="clusterName"]');
-
-/* click input */
-await clusterInput.click({ force:true });
-
-/* CLICK DROPDOWN ARROW BUTTON (REAL ELEMENT) */
-const clusterArrow =
-  page.locator(
-    'mat-form-field button.mat-mdc-icon-button'
-  ).first();
-
-await clusterArrow.click({ force:true });
-
-await wait(1500);
-
-/* wait until options exist (NOT visibility) */
-await page.waitForFunction(() => {
-  return document.querySelectorAll(
-    '.cdk-overlay-pane mat-option'
-  ).length > 0;
-}, { timeout:60000 });
-
-/* options inside overlay */
-const clusterOptions =
-  page.locator('.cdk-overlay-pane mat-option');
-
-const clusterCount =
-  await clusterOptions.count();
-
-if (clusterCount === 0)
-  throw new Error('No cluster options found');
-
-const randomCluster =
-  Math.floor(Math.random() * clusterCount);
-
-/* JS click = bypass Angular animation issues */
-await clusterOptions
-  .nth(randomCluster)
-  .evaluate(el => el.click());
-
-await wait(2000);
-
-
-
-/* ===== APPLY BUTTON ===== */
-
-await page.getByRole('button', { name:/apply/i })
-  .click({ force:true });
-
-await wait(8000);
-
-console.log('🔥 CLUSTER APIs:', clusterDataViewApis.length);
-
-
-  /* =================================================
      REPORT UI
   ================================================= */
-const table = (data, section) => `
+
+  const table = (data, section) => `
 <table>
-  <tr>
-    <th>Time</th>
-    <th>Status</th>
-    <th>Method</th>
-    <th>URL</th>
-    <th>Response</th>
-  </tr>
+<tr>
+<th>Time</th>
+<th>Status</th>
+<th>Method</th>
+<th>URL</th>
+<th>Response</th>
+</tr>
 
-  ${data.map((a,i)=>`
-    <tr>
-      <td>${a.time}</td>
-      <td>${a.status}</td>
-      <td>${a.method}</td>
-      <td class="url">${a.url}</td>
-
-      <td>
-        <button class="json-btn"
-          onclick="toggleJson('json-${section}-${i}')">
-          View JSON
-        </button>
-
-        <pre id="json-${section}-${i}" class="json-box">
+${data.map((a,i)=>`
+<tr>
+<td>${a.time}</td>
+<td>${a.status}</td>
+<td>${a.method}</td>
+<td class="url">${a.url}</td>
+<td>
+<button onclick="toggleJson('json-${section}-${i}')">
+View JSON
+</button>
+<pre id="json-${section}-${i}" style="display:none;">
 ${a.json}
-        </pre>
-      </td>
-    </tr>
-  `).join('')}
+</pre>
+</td>
+</tr>
+`).join('')}
 </table>`;
-
-
 
   const html = `
 <html>
 <head>
 <style>
-body{
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
-  padding:20px;
-}
-
-button{
-  padding:10px 15px;
-  margin:5px;
-  background:#2563eb;
-  color:white;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.card{
-  display:none;
-  background:#111827;
-  padding:15px;
-  margin-top:20px;
-  border-radius:10px;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th,td{
-  border:1px solid #374151;
-  padding:6px;
-  font-size:12px;
-  vertical-align:top;
-}
-
-.url{
-  max-width:420px;
-  word-break:break-all;
-}
-
-.json-btn{
-  background:#16a34a;
-  font-size:11px;
-  padding:5px 10px;
-}
-
-.json-btn:hover{
-  background:#15803d;
-}
-
-.json-box{
-  display:none;
-  max-height:220px;
-  overflow:auto;
-  background:#000;
-  padding:8px;
-  margin-top:6px;
-  border-radius:6px;
-}
+body{font-family:Arial;background:#0f172a;color:white;padding:20px}
+.card{display:none;background:#111827;padding:15px;margin-top:20px;border-radius:10px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #374151;padding:6px;font-size:12px}
+.url{max-width:420px;word-break:break-all}
+pre{max-height:220px;overflow:auto;background:black;padding:8px}
+button{margin:5px;padding:8px 12px;background:#2563eb;color:white;border:none;border-radius:6px}
 </style>
-
 </head>
 <body>
 
@@ -421,16 +266,11 @@ th,td{
 <button onclick="show('overview')">Overview AQI APIs</button>
 <button onclick="show('widget')">Dashboard Widget APIs</button>
 <button onclick="show('table')">Dashboard Table View APIs</button>
-<button onclick="show('cluster')">Cluster Data View APIs</button>
-
 
 <div id="login" class="card">${table(loginApis,'login')}</div>
 <div id="overview" class="card">${table(overviewApis,'overview')}</div>
 <div id="widget" class="card">${table(dashboardWidgetApis,'widget')}</div>
 <div id="table" class="card">${table(dashboardTableApis,'table')}</div>
-<div id="cluster" class="card">
-  ${table(clusterDataViewApis,'cluster')}
-</div>
 
 <script>
 function show(id){
@@ -438,16 +278,12 @@ function show(id){
   .forEach(c=>c.style.display='none');
  document.getElementById(id).style.display='block';
 }
-
 function toggleJson(id){
- const el = document.getElementById(id);
- el.style.display =
-   el.style.display === 'block' ? 'none' : 'block';
+ const el=document.getElementById(id);
+ el.style.display=el.style.display==='block'?'none':'block';
 }
-
 show('login');
 </script>
-
 
 </body>
 </html>
@@ -455,22 +291,5 @@ show('login');
 
   fs.writeFileSync('docs/index.html', html);
 
-  console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
+  console.log('🔥 FLOW COMPLETE');
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

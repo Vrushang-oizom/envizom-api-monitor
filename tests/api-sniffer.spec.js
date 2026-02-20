@@ -81,25 +81,49 @@ test('Envizom API Monitor → PRO Stable Flow', async ({ page }) => {
     }
   });
 
-  /* ===============================
-     LOGIN
-  =============================== */
+ /* ===============================
+   LOGIN (FINAL STABLE)
+=============================== */
 
-  await page.goto('https://devenvizom.oizom.com/#/login');
+await page.goto('https://devenvizom.oizom.com/#/login');
 
-  await page.getByPlaceholder(/email/i)
-    .fill(process.env.ENVIZOM_EMAIL);
+await page.getByPlaceholder(/email/i)
+  .fill(process.env.ENVIZOM_EMAIL);
 
-  await page.getByPlaceholder(/password/i)
-    .fill(process.env.ENVIZOM_PASSWORD);
+await page.getByPlaceholder(/password/i)
+  .fill(process.env.ENVIZOM_PASSWORD);
 
-  const loginBtn =
-    page.getByRole('button', { name:/log in/i });
+/* ===== REQUIRED AGREEMENT ===== */
 
-  await expect(loginBtn).toBeEnabled();
-  await loginBtn.click();
+// checkbox
+const checkbox = page.locator('mat-checkbox');
+if (await checkbox.count()) {
+  await checkbox.first().click({ force:true });
+}
 
-  await page.waitForURL(/overview\/map/, { timeout:90000 });
+// agree button (if appears)
+const agreeBtn = page.getByRole('button', { name:/agree/i });
+if (await agreeBtn.count()) {
+  await agreeBtn.click({ force:true });
+}
+
+/* ===== WAIT UNTIL LOGIN ENABLED ===== */
+
+const loginBtn =
+  page.getByRole('button', { name:/log in/i });
+
+await expect(loginBtn).toBeEnabled({
+  timeout: 20000
+});
+
+/* ===== LOGIN ===== */
+
+await loginBtn.click();
+
+await page.waitForURL(/overview\/map/, {
+  timeout: 90000
+});
+
 
   /* ===============================
      OVERVIEW AQI
@@ -260,3 +284,4 @@ show('login');
 
   console.log('🔥 PRO FLOW COMPLETED');
 });
+

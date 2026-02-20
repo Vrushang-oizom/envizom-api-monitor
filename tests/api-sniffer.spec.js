@@ -293,8 +293,6 @@ await wait(2000);
 const clusterOptions =
   page.locator('.mat-mdc-autocomplete-panel mat-option');
 
-const clusterCount = await clusterOptions.count();
-
 if (clusterCount === 0)
   throw new Error('No cluster options found');
 
@@ -465,6 +463,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

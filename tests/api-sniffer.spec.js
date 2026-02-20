@@ -72,9 +72,9 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     if (phase === 'login') loginApis.push(api);
     else if (phase === 'overview') overviewApis.push(api);
     else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
-    else if (phase === 'dashboard-table')
+    else if (phase === 'dashboard-table'){}
     else if (phase === 'cluster-data') {
-  clusterDataViewApis.push(api);
+    clusterDataViewApis.push(api);
 }{
 
       // ONLY ONE TABLE API
@@ -431,6 +431,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

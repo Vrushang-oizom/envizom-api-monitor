@@ -11,6 +11,8 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   const overviewApis = [];
   const dashboardWidgetApis = [];
   const dashboardTableApis = [];
+  const clusterDataViewApis = [];
+
 
   let phase = 'login';
 
@@ -70,7 +72,10 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     if (phase === 'login') loginApis.push(api);
     else if (phase === 'overview') overviewApis.push(api);
     else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
-    else if (phase === 'dashboard-table') {
+    else if (phase === 'dashboard-table')
+    else if (phase === 'cluster-data') {
+  clusterDataViewApis.push(api);
+}{
 
       // ONLY ONE TABLE API
       if (
@@ -220,6 +225,65 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     dashboardTableApis.length);
 
   /* =================================================
+   CLUSTER → DATA VIEW
+================================================= */
+
+phase = 'cluster-data';
+
+await page.goto('https://devenvizom.oizom.com/#/cluster');
+await killOverlays();
+await wait(6000);
+
+/* ===== CLICK DATA VIEW BUTTON ===== */
+
+await page
+  .locator('button:has-text("Data View")')
+  .first()
+  .click({ force:true });
+
+await wait(3000);
+
+/* ===== CLUSTER DROPDOWN ===== */
+
+const clusterInput =
+  page.locator('input[formcontrolname="clusterName"]');
+
+await clusterInput.click({ force:true });
+await clusterInput.fill('a');
+
+await page.waitForSelector(
+  '.mat-mdc-autocomplete-panel',
+  { timeout:60000 }
+);
+
+const clusterOptions =
+  page.locator('.mat-mdc-autocomplete-panel mat-option');
+
+const clusterCount = await clusterOptions.count();
+
+if (clusterCount === 0)
+  throw new Error('No cluster options found');
+
+const randomCluster =
+  Math.floor(Math.random() * clusterCount);
+
+await clusterOptions
+  .nth(randomCluster)
+  .evaluate(el => el.click());
+
+await wait(2000);
+
+/* ===== APPLY BUTTON ===== */
+
+await page.getByRole('button', { name:/apply/i })
+  .click({ force:true });
+
+await wait(8000);
+
+console.log('🔥 CLUSTER APIs:', clusterDataViewApis.length);
+
+
+  /* =================================================
      REPORT UI
   ================================================= */
 const table = (data, section) => `
@@ -331,11 +395,16 @@ th,td{
 <button onclick="show('overview')">Overview AQI APIs</button>
 <button onclick="show('widget')">Dashboard Widget APIs</button>
 <button onclick="show('table')">Dashboard Table View APIs</button>
+<button onclick="show('cluster')">Cluster Data View APIs</button>
+
 
 <div id="login" class="card">${table(loginApis,'login')}</div>
 <div id="overview" class="card">${table(overviewApis,'overview')}</div>
 <div id="widget" class="card">${table(dashboardWidgetApis,'widget')}</div>
 <div id="table" class="card">${table(dashboardTableApis,'table')}</div>
+<div id="cluster" class="card">
+  ${table(clusterDataViewApis,'cluster')}
+</div>
 
 <script>
 function show(id){
@@ -362,6 +431,7 @@ show('login');
 
   console.log('🔥 ULTRA ENTERPRISE FLOW COMPLETE');
 });
+
 
 
 

@@ -32,6 +32,11 @@ jobs:
         env:
           ENVIZOM_EMAIL: ${{ secrets.ENVIZOM_EMAIL }}
           ENVIZOM_PASSWORD: ${{ secrets.ENVIZOM_PASSWORD }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
 
       - name: Commit updated report
         run: |

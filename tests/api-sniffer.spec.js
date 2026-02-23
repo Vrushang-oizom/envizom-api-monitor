@@ -20,13 +20,13 @@ async function updateGoogleSheet(api) {
 
   const sheetId = process.env.GOOGLE_SHEET_ID;
 
-  // clear old rows
+  // Clear old rows (keep header)
   await sheets.spreadsheets.values.clear({
     spreadsheetId: sheetId,
     range: 'APIs!A2:E'
   });
 
-  // insert latest API
+  // Insert latest API
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId,
     range: 'APIs!A2',
@@ -129,8 +129,22 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await page.getByPlaceholder(/password/i)
     .fill(process.env.ENVIZOM_PASSWORD);
 
+  // checkbox (if exists)
+  const checkbox = page.locator('mat-checkbox');
+  if (await checkbox.count()) {
+    await checkbox.first().click({ force:true });
+  }
+
+  // agree button (if exists)
+  const agreeBtn = page.getByRole('button', { name:/agree/i });
+  if (await agreeBtn.count()) {
+    await agreeBtn.click({ force:true });
+  }
+
   const loginBtn = page.getByRole('button',{name:/log in/i});
-  await expect(loginBtn).toBeEnabled();
+
+  await expect(loginBtn).toBeEnabled({ timeout:20000 });
+
   await loginBtn.click();
 
   await page.waitForURL(/overview\/map/, { timeout:90000 });
@@ -159,6 +173,10 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   const options = page.locator('.mat-mdc-autocomplete-panel mat-option');
   const count = await options.count();
+
+  if (count === 0)
+    throw new Error('No devices loaded');
+
   await options.nth(Math.floor(Math.random()*count)).click();
 
   await wait(5000);

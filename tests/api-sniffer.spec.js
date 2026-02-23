@@ -1,38 +1,68 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
-const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 
-const transporter = nodemailer.createTransport({
-   host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: false,
-    auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-});
+/* =================================================
+   GOOGLE SHEETS UPDATE
+================================================= */
+
+async function updateGoogleSheet(api) {
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  });
+
+  const sheets = google.sheets({
+    version: 'v4',
+    auth
+  });
+
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+
+  // Clear old rows (keep header)
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: sheetId,
+    range: 'Sheet1!A2:E'
+  });
+
+  // Insert latest API
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId,
+    range: 'Sheet1!A2',
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[
+        api.time,
+        api.status,
+        api.method,
+        api.url,
+        api.json
+      ]]
+    }
+  });
+
+  console.log('🔥 Google Sheet Updated');
+}
+
+/* =================================================
+   MAIN TEST
+================================================= */
 
 test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
-  /* =================================================
-     STORAGE
-  ================================================= */
-
+  /* STORAGE */
   const loginApis = [];
   const overviewApis = [];
   const dashboardWidgetApis = [];
   const dashboardTableApis = [];
-  const failedApis = [];
 
   let phase = 'login';
 
-  /* =================================================
-     HELPERS
-  ================================================= */
+  /* HELPERS */
 
   async function killOverlays() {
     await page.evaluate(() => {
-
       const kill = () => {
         document.querySelectorAll(
           '.cdk-overlay-backdrop,\
@@ -79,33 +109,23 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
       json: json.substring(0, 1500)
     };
 
-    /* ===== ENTERPRISE ERROR TRACKER ===== */
+    if (phase === 'login') loginApis.push(api);
 
-    const ERROR_STATUS = [
-      400,401,402,403,404,417,429,500
-    ];
-    
-    if (ERROR_STATUS.includes(api.status)) {
-      failedApis.push(api);
+    else if (phase === 'overview') {
+      if (
+        api.method === 'GET' &&
+        url.includes('/devices/data?')
+      ) {
+        overviewApis.length = 0;
+        overviewApis.push(api);
+      }
     }
 
+    else if (phase === 'dashboard-widget') {
+      dashboardWidgetApis.push(api);
+    }
 
-    if (phase === 'login') loginApis.push(api);
-    else if (phase === 'overview') {
-
-  // ONLY KEEP AQI DATA API
-  if (
-    api.method === 'GET' &&
-    url.includes('/devices/data?')
-  ) {
-    overviewApis.length = 0; // keep only one
-    overviewApis.push(api);
-  }
-}
-    else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
     else if (phase === 'dashboard-table') {
-
-      // ONLY ONE TABLE API
       if (
         api.method === 'GET' &&
         url.includes('/devices/data?')
@@ -162,7 +182,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await wait(7000);
 
   /* =================================================
-     DASHBOARD WIDGET VIEW
+     DASHBOARD WIDGET
   ================================================= */
 
   await page.locator('a[title="Dashboard"]')
@@ -173,24 +193,18 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   phase = 'dashboard-widget';
 
-  /* ===== DEVICE DROPDOWN ===== */
-
   const deviceInput =
     page.locator('input[formcontrolname="deviceSearch"]');
 
   await deviceInput.click({ force:true });
   await deviceInput.fill('a');
 
-  await page.waitForSelector(
-    '.mat-mdc-autocomplete-panel',
-    { timeout:60000 }
-  );
+  await page.waitForSelector('.mat-mdc-autocomplete-panel');
 
   const options =
     page.locator('.mat-mdc-autocomplete-panel mat-option');
 
   const optionCount = await options.count();
-
   if (optionCount === 0)
     throw new Error('No devices loaded');
 
@@ -203,7 +217,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await wait(5000);
 
   /* =================================================
-     DASHBOARD TABLE VIEW
+     DASHBOARD TABLE
   ================================================= */
 
   await page.goto(
@@ -246,148 +260,49 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   console.log('🔥 TABLE API CAPTURED:',
     dashboardTableApis.length);
 
-
   /* =================================================
-   ENTERPRISE EMAIL ALERT
-================================================= */
-
-async function sendFailureEmail() {
-
-  if (failedApis.length === 0) {
-    console.log('✅ No failed APIs — mail skipped');
-    return;
-  }
-
-  console.log('📧 Sending failure alert mail...');
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD
-    }
-  });
-
-  const rows = failedApis.map(a => `
-    <tr>
-      <td>${a.time}</td>
-      <td>${a.status}</td>
-      <td>${a.method}</td>
-      <td>${a.url}</td>
-      <td><pre>${a.json}</pre></td>
-    </tr>
-  `).join('');
-
-  const mailHtml = `
-    <h2>🚨 Envizom API Failures Detected</h2>
-    <p><b>Total Failed APIs:</b> ${failedApis.length}</p>
-
-    <table border="1" cellpadding="6" cellspacing="0">
-      <tr>
-        <th>Time</th>
-        <th>Status</th>
-        <th>Method</th>
-        <th>URL</th>
-        <th>Response</th>
-      </tr>
-      ${rows}
-    </table>
-  `;
-
-  await transporter.sendMail({
-    from: process.env.GMAIL_USER,
-    to: process.env.ALERT_EMAIL,
-    subject: '🚨 Envizom API Monitor — Failed APIs',
-    html: mailHtml
-  });
-
-  console.log('🔥 Failure email sent');
-}
-
-
-  /* =================================================
-     REPORT UI
+     HTML REPORT
   ================================================= */
 
   const table = (data, section) => `
 <table>
 <tr>
-<th>Time</th>
-<th>Status</th>
-<th>Method</th>
-<th>URL</th>
-<th>Response</th>
+<th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th>
 </tr>
-
 ${data.map((a,i)=>`
 <tr>
 <td>${a.time}</td>
 <td>${a.status}</td>
 <td>${a.method}</td>
-<td class="url">${a.url}</td>
-<td>
-<button onclick="toggleJson('json-${section}-${i}')">
-View JSON
-</button>
-<pre id="json-${section}-${i}" style="display:none;">
-${a.json}
-</pre>
-</td>
+<td>${a.url}</td>
+<td><pre>${a.json}</pre></td>
 </tr>
 `).join('')}
 </table>`;
 
-  const html = `
-<html>
-<head>
-<style>
-body{font-family:Arial;background:#0f172a;color:white;padding:20px}
-.card{display:none;background:#111827;padding:15px;margin-top:20px;border-radius:10px}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #374151;padding:6px;font-size:12px}
-.url{max-width:420px;word-break:break-all}
-pre{max-height:220px;overflow:auto;background:black;padding:8px}
-button{margin:5px;padding:8px 12px;background:#2563eb;color:white;border:none;border-radius:6px}
-</style>
-</head>
-<body>
-
+  fs.writeFileSync('docs/index.html', `
+<html><body>
 <h1>Envizom API Monitor</h1>
+${table(loginApis,'login')}
+${table(overviewApis,'overview')}
+${table(dashboardWidgetApis,'widget')}
+${table(dashboardTableApis,'table')}
+</body></html>
+`);
 
-<button onclick="show('login')">Login APIs</button>
-<button onclick="show('overview')">Overview AQI APIs</button>
-<button onclick="show('widget')">Dashboard Widget APIs</button>
-<button onclick="show('table')">Dashboard Table View APIs</button>
+  /* =================================================
+     GOOGLE SHEET UPDATE
+  ================================================= */
 
-<div id="login" class="card">${table(loginApis,'login')}</div>
-<div id="overview" class="card">${table(overviewApis,'overview')}</div>
-<div id="widget" class="card">${table(dashboardWidgetApis,'widget')}</div>
-<div id="table" class="card">${table(dashboardTableApis,'table')}</div>
+  const latestApi =
+    dashboardTableApis[0] ||
+    overviewApis[0] ||
+    dashboardWidgetApis[0] ||
+    loginApis[0];
 
-<script>
-function show(id){
- document.querySelectorAll('.card')
-  .forEach(c=>c.style.display='none');
- document.getElementById(id).style.display='block';
-}
-function toggleJson(id){
- const el=document.getElementById(id);
- el.style.display=el.style.display==='block'?'none':'block';
-}
-show('login');
-</script>
+  if (latestApi) {
+    await updateGoogleSheet(latestApi);
+  }
 
-</body>
-</html>
-`;
-
-  fs.writeFileSync('docs/index.html', html);
-  
-  await sendFailureEmail();
   console.log('🔥 FLOW COMPLETE');
 });
-
-
-
-
-

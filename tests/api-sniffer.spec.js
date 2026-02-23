@@ -21,10 +21,20 @@ async function updateGoogleSheet(api) {
   const sheetId = process.env.GOOGLE_SHEET_ID;
 
   // Clear old rows (keep header)
-  await sheets.spreadsheets.values.clear({
-    spreadsheetId: sheetId,
-    range: 'APIs!A2:E'
-  });
+  await sheets.spreadsheets.values.append({
+  spreadsheetId: sheetId,
+  range: 'APIs!A:E',
+  valueInputOption: 'RAW',
+  requestBody: {
+    values: [[
+      api.time,
+      api.status,
+      api.method,
+      api.url,
+      api.json
+    ]]
+  }
+});
 
   // Insert latest API
   await sheets.spreadsheets.values.update({
@@ -265,4 +275,5 @@ show('login');
 
   console.log('🔥 FLOW COMPLETE');
 });
+
 

@@ -1,4 +1,4 @@
-npm install nodemailer
+npm install nodemailer;
 
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
@@ -388,6 +388,7 @@ show('login');
   await sendFailureEmail();
   console.log('🔥 FLOW COMPLETE');
 });
+
 
 
 

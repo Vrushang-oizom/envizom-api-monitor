@@ -4,6 +4,16 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 
+const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
 test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   /* =================================================
@@ -378,5 +388,6 @@ show('login');
   await sendFailureEmail();
   console.log('🔥 FLOW COMPLETE');
 });
+
 
 

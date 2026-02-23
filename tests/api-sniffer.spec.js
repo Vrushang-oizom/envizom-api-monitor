@@ -68,7 +68,17 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     };
 
     if (phase === 'login') loginApis.push(api);
-    else if (phase === 'overview') overviewApis.push(api);
+    else if (phase === 'overview') {
+
+  // ONLY KEEP AQI DATA API
+  if (
+    api.method === 'GET' &&
+    url.includes('/devices/data?')
+  ) {
+    overviewApis.length = 0; // keep only one
+    overviewApis.push(api);
+  }
+}
     else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
     else if (phase === 'dashboard-table') {
 
@@ -293,3 +303,4 @@ show('login');
 
   console.log('🔥 FLOW COMPLETE');
 });
+

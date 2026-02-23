@@ -267,29 +267,151 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   const table = (data, section) => `
 <table>
-<tr>
-<th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th>
-</tr>
-${data.map((a,i)=>`
-<tr>
-<td>${a.time}</td>
-<td>${a.status}</td>
-<td>${a.method}</td>
-<td>${a.url}</td>
-<td><pre>${a.json}</pre></td>
-</tr>
-`).join('')}
-</table>`;
+  <tr>
+    <th>Time</th>
+    <th>Status</th>
+    <th>Method</th>
+    <th>URL</th>
+    <th>Response</th>
+  </tr>
 
-  fs.writeFileSync('docs/index.html', `
-<html><body>
-<h1>Envizom API Monitor</h1>
-${table(loginApis,'login')}
-${table(overviewApis,'overview')}
-${table(dashboardWidgetApis,'widget')}
-${table(dashboardTableApis,'table')}
-</body></html>
-`);
+  ${data.map((a,i)=>`
+    <tr>
+      <td>${a.time}</td>
+      <td>${a.status}</td>
+      <td>${a.method}</td>
+      <td class="url">${a.url}</td>
+
+      <td>
+        <button class="json-btn"
+          onclick="toggleJson('json-${section}-${i}')">
+          View JSON
+        </button>
+
+        <pre id="json-${section}-${i}" class="json-box">
+${a.json}
+        </pre>
+      </td>
+    </tr>
+  `).join('')}
+</table>`;
+<head>
+<style>
+
+body{
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+
+h1{
+  color:#38bdf8;
+}
+
+button{
+  padding:10px 15px;
+  margin:5px;
+  background:#2563eb;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#1d4ed8;
+}
+
+.card{
+  display:none;
+  background:#111827;
+  padding:15px;
+  margin-top:20px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,0.4);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th{
+  background:#1f2937;
+  color:#93c5fd;
+}
+
+th,td{
+  border:1px solid #374151;
+  padding:6px;
+  font-size:12px;
+  vertical-align:top;
+}
+
+.url{
+  max-width:420px;
+  word-break:break-all;
+}
+
+.json-btn{
+  background:#16a34a;
+  font-size:11px;
+  padding:5px 10px;
+}
+
+.json-btn:hover{
+  background:#15803d;
+}
+
+.json-box{
+  display:none;
+  max-height:220px;
+  overflow:auto;
+  background:#000;
+  color:#22c55e;
+  padding:8px;
+  margin-top:6px;
+  border-radius:6px;
+  font-size:11px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🔥 Envizom API Monitor</h1>
+
+<button onclick="show('login')">Login APIs</button>
+<button onclick="show('overview')">Overview AQI APIs</button>
+<button onclick="show('widget')">Dashboard Widget APIs</button>
+<button onclick="show('table')">Dashboard Table APIs</button>
+
+<div id="login" class="card">${table(loginApis,'login')}</div>
+<div id="overview" class="card">${table(overviewApis,'overview')}</div>
+<div id="widget" class="card">${table(dashboardWidgetApis,'widget')}</div>
+<div id="table" class="card">${table(dashboardTableApis,'table')}</div>
+
+<script>
+function show(id){
+ document.querySelectorAll('.card')
+  .forEach(c=>c.style.display='none');
+ document.getElementById(id).style.display='block';
+}
+
+function toggleJson(id){
+ const el=document.getElementById(id);
+ el.style.display =
+   el.style.display === 'block' ? 'none' : 'block';
+}
+
+show('login');
+</script>
+
+</body>
+</html>
+`;
 
   /* =================================================
      GOOGLE SHEET UPDATE
@@ -307,6 +429,7 @@ ${table(dashboardTableApis,'table')}
 
   console.log('🔥 FLOW COMPLETE');
 });
+
 
 
 

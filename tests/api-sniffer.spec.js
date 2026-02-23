@@ -1,5 +1,8 @@
+npm install nodemailer
+
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 
 test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
@@ -11,6 +14,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   const overviewApis = [];
   const dashboardWidgetApis = [];
   const dashboardTableApis = [];
+  const failedApis = [];
 
   let phase = 'login';
 
@@ -66,6 +70,17 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
       url,
       json: json.substring(0, 1500)
     };
+
+    /* ===== ENTERPRISE ERROR TRACKER ===== */
+
+    const ERROR_STATUS = [
+      400,401,402,403,404,417,429,500
+    ];
+    
+    if (ERROR_STATUS.includes(api.status)) {
+      failedApis.push(api);
+    }
+
 
     if (phase === 'login') loginApis.push(api);
     else if (phase === 'overview') {
@@ -223,6 +238,65 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   console.log('🔥 TABLE API CAPTURED:',
     dashboardTableApis.length);
 
+
+  /* =================================================
+   ENTERPRISE EMAIL ALERT
+================================================= */
+
+async function sendFailureEmail() {
+
+  if (failedApis.length === 0) {
+    console.log('✅ No failed APIs — mail skipped');
+    return;
+  }
+
+  console.log('📧 Sending failure alert mail...');
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD
+    }
+  });
+
+  const rows = failedApis.map(a => `
+    <tr>
+      <td>${a.time}</td>
+      <td>${a.status}</td>
+      <td>${a.method}</td>
+      <td>${a.url}</td>
+      <td><pre>${a.json}</pre></td>
+    </tr>
+  `).join('');
+
+  const mailHtml = `
+    <h2>🚨 Envizom API Failures Detected</h2>
+    <p><b>Total Failed APIs:</b> ${failedApis.length}</p>
+
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Method</th>
+        <th>URL</th>
+        <th>Response</th>
+      </tr>
+      ${rows}
+    </table>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.GMAIL_USER,
+    to: process.env.ALERT_EMAIL,
+    subject: '🚨 Envizom API Monitor — Failed APIs',
+    html: mailHtml
+  });
+
+  console.log('🔥 Failure email sent');
+}
+
+
   /* =================================================
      REPORT UI
   ================================================= */
@@ -300,7 +374,9 @@ show('login');
 `;
 
   fs.writeFileSync('docs/index.html', html);
-
+  
+  await sendFailureEmail();
   console.log('🔥 FLOW COMPLETE');
 });
+
 

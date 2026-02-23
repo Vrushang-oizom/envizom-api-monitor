@@ -12,6 +12,7 @@ async function updateGoogleSheet(api) {
     credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
     scopes: ['https://www.googleapis.com/auth/spreadsheets']
   });
+   console.log(process.env.GOOGLE_SERVICE_ACCOUNT?.slice(0,80));
 
   const sheets = google.sheets({
     version: 'v4',
@@ -306,3 +307,4 @@ ${table(dashboardTableApis,'table')}
 
   console.log('🔥 FLOW COMPLETE');
 });
+

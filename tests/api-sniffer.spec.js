@@ -1,5 +1,3 @@
-npm install nodemailer;
-
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const nodemailer = require('nodemailer');

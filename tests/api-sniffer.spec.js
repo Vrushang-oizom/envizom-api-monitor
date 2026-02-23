@@ -24,7 +24,7 @@ async function updateGoogleSheet(api) {
   // Clear old rows (keep header)
   await sheets.spreadsheets.values.clear({
     spreadsheetId: sheetId,
-    range: 'Sheet1!A2:E'
+    range: 'APIs!A2:E'
   });
 
   // Insert latest API
@@ -307,5 +307,6 @@ ${table(dashboardTableApis,'table')}
 
   console.log('🔥 FLOW COMPLETE');
 });
+
 
 

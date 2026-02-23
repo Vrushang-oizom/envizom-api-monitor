@@ -30,7 +30,7 @@ async function updateGoogleSheet(api) {
   // Insert latest API
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId,
-    range: 'Sheet1!A2',
+    range: 'APIs!A2',
     valueInputOption: 'RAW',
     requestBody: {
       values: [[
@@ -307,4 +307,5 @@ ${table(dashboardTableApis,'table')}
 
   console.log('🔥 FLOW COMPLETE');
 });
+
 

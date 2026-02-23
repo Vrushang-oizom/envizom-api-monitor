@@ -227,8 +227,8 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 
 <button onclick="show('login')">Login</button>
 <button onclick="show('overview')">Overview</button>
-<button onclick="show('widget')">Widget</button>
-<button onclick="show('table')">Table</button>
+<button onclick="show('widget')">Dashboard Widget</button>
+<button onclick="show('table')">Dashboard Table</button>
 
 <div id="login" class="card">${table(loginApis,'login')}</div>
 <div id="overview" class="card">${table(overviewApis,'overview')}</div>
@@ -265,3 +265,4 @@ show('login');
 
   console.log('🔥 FLOW COMPLETE');
 });
+

@@ -6,7 +6,9 @@ const { google } = require('googleapis');
    GOOGLE SHEETS UPDATE
 ================================================= */
 
-async function updateGoogleSheet(api) {
+async function updateGoogleSheet(sheetName, apis) {
+
+  if (!apis.length) return;
 
   const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
@@ -20,41 +22,54 @@ async function updateGoogleSheet(api) {
 
   const sheetId = process.env.GOOGLE_SHEET_ID;
 
-  // Clear old rows (keep header)
-  await sheets.spreadsheets.values.append({
-  spreadsheetId: sheetId,
-  range: 'APIs!A:E',
-  valueInputOption: 'RAW',
-  requestBody: {
-    values: [[
-      api.time,
-      api.status,
-      api.method,
-      api.url,
-      api.json
-    ]]
-  }
-});
+  // STEP 1 — Insert empty rows at TOP
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: sheetId,
+    requestBody: {
+      requests: [{
+        insertDimension: {
+          range: {
+            sheetId: await getSheetId(sheets, sheetId, sheetName),
+            dimension: "ROWS",
+            startIndex: 1,
+            endIndex: 1 + apis.length
+          },
+          inheritFromBefore: false
+        }
+      }]
+    }
+  });
 
-  // Insert latest API
+  // STEP 2 — Write new APIs on top
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId,
-    range: 'APIs!A2',
+    range: `${sheetName}!A2`,
     valueInputOption: 'RAW',
     requestBody: {
-      values: [[
+      values: apis.map(api => [
         api.time,
         api.status,
         api.method,
         api.url,
         api.json
-      ]]
+      ])
     }
   });
 
-  console.log('🔥 Google Sheet Updated');
+  console.log(`🔥 Updated Sheet: ${sheetName}`);
 }
 
+async function getSheetId(sheets, spreadsheetId, name) {
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId
+  });
+
+  const sheet = meta.data.sheets.find(
+    s => s.properties.title === name
+  );
+
+  return sheet.properties.sheetId;
+}
 /* =================================================
    MAIN TEST
 ================================================= */
@@ -233,7 +248,7 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 </head>
 <body>
 
-<h1>🔥 Envizom API Monitor</h1>
+<h1>Envizom API Monitor</h1>
 
 <button onclick="show('login')">Login</button>
 <button onclick="show('overview')">Overview</button>
@@ -265,15 +280,12 @@ show('login');
 
   /* ================= GOOGLE SHEET ================= */
 
-  const latestApi =
-    dashboardTableApis[0] ||
-    overviewApis[0] ||
-    dashboardWidgetApis[0] ||
-    loginApis[0];
-
-  if (latestApi) await updateGoogleSheet(latestApi);
-
-  console.log('🔥 FLOW COMPLETE');
+   await updateGoogleSheet('Login', loginApis);
+   await updateGoogleSheet('Overview AQI', overviewApis);
+   await updateGoogleSheet('Dashboard Widget', dashboardWidgetApis);
+   await updateGoogleSheet('Dashboard Table', dashboardTableApis);
+  console.log('FLOW COMPLETE');
 });
+
 
 

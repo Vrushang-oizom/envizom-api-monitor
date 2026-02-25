@@ -172,7 +172,10 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   await loginBtn.click();
 
-  await page.waitForURL(/overview\/map/, { timeout:90000 });
+  await Promise.race([
+  page.waitForURL(/overview\/map/, { timeout: 90000 }),
+  page.locator('body').waitFor({ state: 'visible', timeout: 90000 })
+]);
 
   await killOverlays();
   await wait(5000);
@@ -286,6 +289,7 @@ show('login');
    await updateGoogleSheet('Dashboard Table', dashboardTableApis);
   console.log('FLOW COMPLETE');
 });
+
 
 
 

@@ -396,11 +396,15 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   await page.screenshot({ path: 'docs/cluster-step5-devices-selected.png', fullPage: true });
 
-  // STEP 6 — Click Next directly (no need to close dropdown — Next click handles it)
-  // The "Next" button is at the bottom of the dialog, always visible
+  // STEP 6a — First Next click → closes dropdown, shows selected devices summary
+  await page.locator('button:has-text("Next")').first().click({ force: true });
+  await wait(3000);
+  await page.screenshot({ path: 'docs/cluster-step6a-dropdown-closed.png', fullPage: true });
+
+  // STEP 6b — Second Next click → goes to polygon/map step
   await page.locator('button:has-text("Next")').first().click({ force: true });
   await wait(5000);
-  await page.screenshot({ path: 'docs/cluster-step6-after-next2-map.png', fullPage: true });
+  await page.screenshot({ path: 'docs/cluster-step6b-map-loaded.png', fullPage: true });
 
   // STEP 7 — Draw polygon on the map covering the devices
   const mapContainer = page.locator('.gm-style').first();

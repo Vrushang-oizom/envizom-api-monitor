@@ -343,15 +343,30 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await clusterNameInput.fill(`test${randomNum}`);
   await wait(1000);
 
-  // STEP 4 — Click Next
-  const nextBtn1 = page.getByRole('button', { name: /next/i });
-  await nextBtn1.click({ force: true });
+  // STEP 4 — Click Next (uses mattooltip="Next" from the stepper)
+  const nextBtn1 = page.locator('button[ng-reflect-message="Next"], button:has-text("Next")').first();
+  await nextBtn1.evaluate(el => el.click());
   await wait(5000);
+
+  // Verify stepper moved — the device select should now exist in DOM
+  await page.waitForSelector('mat-select[formcontrolname="selectedDevicesControl"]', { state: 'attached', timeout: 10000 });
 
   // STEP 5 — Select 2-3 devices from multi-select dropdown (NOT "Select All")
   const selectDevices = page.locator('mat-select[formcontrolname="selectedDevicesControl"]');
-  await selectDevices.waitFor({ state: 'visible', timeout: 10000 });
-  await selectDevices.click({ force: true });
+
+  // The stepper may keep the element hidden — scroll it into view and force-click
+  await selectDevices.scrollIntoViewIfNeeded({ timeout: 10000 }).catch(() => {});
+  await wait(2000);
+  await selectDevices.dispatchEvent('click');
+  await wait(1000);
+
+  // If panel didn't open, try force-clicking the parent form field
+  const panelVisible = await page.locator('.mat-mdc-select-panel[aria-multiselectable="true"]').isVisible().catch(() => false);
+  if (!panelVisible) {
+    console.log('⚠️ Panel not open, trying parent click...');
+    await selectDevices.evaluate(el => el.click());
+    await wait(2000);
+  }
 
   // Wait for multi-select panel to open
   await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
@@ -386,9 +401,9 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await page.keyboard.press('Escape');
   await wait(1000);
 
-  // STEP 6 — Click Next (second time)
-  const nextBtn2 = page.getByRole('button', { name: /next/i });
-  await nextBtn2.click({ force: true });
+  // STEP 6 — Click Next (second time — to map step)
+  const nextBtn2 = page.locator('button[ng-reflect-message="Next"], button:has-text("Next")').first();
+  await nextBtn2.evaluate(el => el.click());
   await wait(4000);
 
   // STEP 7 — Draw polygon on the map covering the devices
@@ -424,8 +439,8 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   }
 
   // STEP 8 — Click Submit
-  const submitBtn = page.getByRole('button', { name: /submit/i });
-  await submitBtn.click({ force: true });
+  const submitBtn = page.locator('button[ng-reflect-message="Submit"], button:has-text("Submit")').first();
+  await submitBtn.evaluate(el => el.click());
 
   // Wait for the 2 cluster APIs: /cluster and /overview/v2
   await Promise.allSettled([

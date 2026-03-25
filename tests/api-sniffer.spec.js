@@ -376,7 +376,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   if (deviceCount === 0) {
     console.log('⚠️ No devices on first try, retrying dropdown...');
-    await page.keyboard.press('Escape');
+    await page.locator('.cdk-overlay-backdrop').click({ force: true }).catch(() => {});
     await wait(2000);
     await selectDevices.click({ force: true });
     await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
@@ -393,14 +393,34 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     await wait(500);
   }
 
-  await page.keyboard.press('Escape');
+  // Close the dropdown by clicking on the backdrop (NOT Escape — that closes the whole dialog)
+  await page.locator('.cdk-overlay-backdrop').click({ force: true }).catch(() => {});
   await wait(1000);
   await page.screenshot({ path: 'docs/cluster-step5-devices-selected.png', fullPage: true });
 
   // STEP 6 — Click Next (second time — to map step)
-  const nextBtn2 = page.locator('button[ng-reflect-message="Next"], button:has-text("Next")').first();
-  await nextBtn2.evaluate(el => el.click());
-  await wait(4000);
+  // Log all visible buttons for debugging
+  const allButtons = await page.locator('button').allTextContents();
+  console.log('📡 All buttons on page:', allButtons.map(b => b.trim()).filter(Boolean));
+
+  const nextBtn2 = page.locator('button[ng-reflect-message="Next"]').first();
+  const nextBtn2Exists = await nextBtn2.count();
+
+  if (nextBtn2Exists > 0) {
+    await nextBtn2.scrollIntoViewIfNeeded().catch(() => {});
+    await wait(500);
+    await nextBtn2.evaluate(el => el.click());
+    console.log('✅ Clicked Next (ng-reflect-message)');
+  } else {
+    // Fallback — find the Next button by text
+    const nextFallback = page.locator('button').filter({ hasText: /^Next$/ }).first();
+    await nextFallback.scrollIntoViewIfNeeded().catch(() => {});
+    await wait(500);
+    await nextFallback.evaluate(el => el.click());
+    console.log('✅ Clicked Next (text fallback)');
+  }
+
+  await wait(5000);
   await page.screenshot({ path: 'docs/cluster-step6-after-next2-map.png', fullPage: true });
 
   // STEP 7 — Draw polygon on the map covering the devices

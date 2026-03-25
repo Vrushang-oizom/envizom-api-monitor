@@ -70,6 +70,7 @@ async function getSheetId(sheets, spreadsheetId, name) {
 
   return sheet.properties.sheetId;
 }
+
 /* =================================================
    MAIN TEST
 ================================================= */
@@ -93,9 +94,9 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
         ).forEach(e => e.remove());
       };
       kill();
-      new MutationObserver(kill).observe(document.body,{
-        childList:true,
-        subtree:true
+      new MutationObserver(kill).observe(document.body, {
+        childList: true,
+        subtree: true
       });
     });
   }
@@ -116,32 +117,18 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     } catch {}
 
     const api = {
-      time: new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),
+      time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       method: response.request().method(),
       status: response.status(),
       url,
-      json: json.substring(0,1500)
+      json: json.substring(0, 1500)
     };
 
-    if (phase === 'login') loginApis.push(api);
-
-    else if (phase === 'overview') {
-      if (api.method === 'GET' && url.includes('/devices/data?')) {
-        overviewApis.length = 0;
-        overviewApis.push(api);
-      }
-    }
-
-    else if (phase === 'dashboard-widget') {
-      dashboardWidgetApis.push(api);
-    }
-
-    else if (phase === 'dashboard-table') {
-      if (api.method === 'GET' && url.includes('/devices/data?')) {
-        dashboardTableApis.length = 0;
-        dashboardTableApis.push(api);
-      }
-    }
+    // Push ALL captured APIs into the current phase bucket — no filtering
+    if (phase === 'login')                loginApis.push(api);
+    else if (phase === 'overview')        overviewApis.push(api);
+    else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
+    else if (phase === 'dashboard-table')  dashboardTableApis.push(api);
   });
 
   /* ================= LOGIN ================= */
@@ -157,44 +144,95 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   // checkbox (if exists)
   const checkbox = page.locator('mat-checkbox');
   if (await checkbox.count()) {
-    await checkbox.first().click({ force:true });
+    await checkbox.first().click({ force: true });
   }
 
   // agree button (if exists)
-  const agreeBtn = page.getByRole('button', { name:/agree/i });
+  const agreeBtn = page.getByRole('button', { name: /agree/i });
   if (await agreeBtn.count()) {
-    await agreeBtn.click({ force:true });
+    await agreeBtn.click({ force: true });
   }
 
-  const loginBtn = page.getByRole('button',{name:/log in/i});
+  const loginBtn = page.getByRole('button', { name: /log in/i });
 
-  await expect(loginBtn).toBeEnabled({ timeout:20000 });
+  await expect(loginBtn).toBeEnabled({ timeout: 20000 });
 
   await loginBtn.click();
 
   await Promise.race([
-  page.waitForURL(/overview\/map/, { timeout: 90000 }),
-  page.locator('body').waitFor({ state: 'visible', timeout: 90000 })
-]);
+    page.waitForURL(/overview\/map/, { timeout: 90000 }),
+    page.locator('body').waitFor({ state: 'visible', timeout: 90000 })
+  ]);
 
   await killOverlays();
-  await wait(5000);
+
+  // Wait for ALL critical login-phase APIs before switching phase
+  await Promise.allSettled([
+    page.waitForResponse(
+      r => r.url().includes('/users/login/v2'),
+      { timeout: 15000 }
+    ),
+    page.waitForResponse(
+      r => r.url().includes('/overview/v2'),
+      { timeout: 15000 }
+    ),
+    page.waitForResponse(
+      r => r.url().includes('/devices/data?'),
+      { timeout: 15000 }
+    ),
+    page.waitForResponse(
+      r => r.url().includes('/real-time/users/'),
+      { timeout: 15000 }
+    ),
+  ]).then(results => {
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length) {
+      console.log(`⚠️ ${failed.length} login API(s) did not fire within timeout`);
+    }
+  });
+
+  // Extra buffer for any trailing responses
+  await wait(3000);
+
+  console.log(`🔥 LOGIN APIs CAPTURED: ${loginApis.length}`);
+  loginApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
 
   /* ================= OVERVIEW ================= */
 
   phase = 'overview';
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
-  await wait(7000);
+
+  // Wait for key overview APIs
+  await Promise.allSettled([
+    page.waitForResponse(
+      r => r.url().includes('/overview/v2'),
+      { timeout: 15000 }
+    ),
+    page.waitForResponse(
+      r => r.url().includes('/devices/data?'),
+      { timeout: 15000 }
+    ),
+  ]).then(results => {
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length) {
+      console.log(`⚠️ ${failed.length} overview API(s) did not fire within timeout`);
+    }
+  });
+
+  await wait(3000);
+
+  console.log(`🔥 OVERVIEW APIs CAPTURED: ${overviewApis.length}`);
+  overviewApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
 
   /* ================= DASHBOARD ================= */
 
-  await page.locator('a[title="Dashboard"]').evaluate(el=>el.click());
+  await page.locator('a[title="Dashboard"]').evaluate(el => el.click());
   await wait(6000);
 
   phase = 'dashboard-widget';
 
   const deviceInput = page.locator('input[formcontrolname="deviceSearch"]');
-  await deviceInput.click({force:true});
+  await deviceInput.click({ force: true });
   await deviceInput.fill('a');
 
   await page.waitForSelector('.mat-mdc-autocomplete-panel');
@@ -205,25 +243,56 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   if (count === 0)
     throw new Error('No devices loaded');
 
-  await options.nth(Math.floor(Math.random()*count)).click();
+  await options.nth(Math.floor(Math.random() * count)).click();
 
-  await wait(5000);
+  // Wait for widget APIs to resolve
+  await Promise.allSettled([
+    page.waitForResponse(
+      r => r.url().includes('/devices/data?'),
+      { timeout: 15000 }
+    ),
+  ]).then(results => {
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length) {
+      console.log(`⚠️ ${failed.length} widget API(s) did not fire within timeout`);
+    }
+  });
+
+  await wait(3000);
+
+  console.log(`🔥 DASHBOARD WIDGET APIs CAPTURED: ${dashboardWidgetApis.length}`);
+  dashboardWidgetApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
 
   /* ================= TABLE ================= */
 
   await page.goto('https://devenvizom.oizom.com/#/dashboard/table/AQ0499001');
 
   phase = 'dashboard-table';
-  await wait(8000);
 
-  console.log('🔥 TABLE API CAPTURED:', dashboardTableApis.length);
+  // Wait for table APIs to resolve
+  await Promise.allSettled([
+    page.waitForResponse(
+      r => r.url().includes('/devices/data?'),
+      { timeout: 15000 }
+    ),
+  ]).then(results => {
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length) {
+      console.log(`⚠️ ${failed.length} table API(s) did not fire within timeout`);
+    }
+  });
+
+  await wait(3000);
+
+  console.log(`🔥 TABLE APIs CAPTURED: ${dashboardTableApis.length}`);
+  dashboardTableApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
 
   /* ================= HTML REPORT ================= */
 
   const table = (data, section) => `
 <table>
 <tr><th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th></tr>
-${data.map((a,i)=>`
+${data.map((a, i) => `
 <tr>
 <td>${a.time}</td>
 <td>${a.status}</td>
@@ -245,34 +314,48 @@ body{font-family:Arial;background:#0f172a;color:white;padding:20px}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #374151;padding:6px;font-size:12px}
 .url{max-width:420px;word-break:break-all}
-.json-btn{background:#16a34a;color:white;border:none;padding:5px 10px}
-.json-box{display:none;background:black;color:#22c55e;max-height:220px;overflow:auto}
+.json-btn{background:#16a34a;color:white;border:none;padding:5px 10px;cursor:pointer;border-radius:4px}
+.json-box{display:none;background:black;color:#22c55e;max-height:220px;overflow:auto;padding:8px;font-size:11px}
+.summary{background:#1e293b;padding:12px;border-radius:8px;margin-bottom:15px}
+.summary span{margin-right:20px;font-size:14px}
+.tab-btn{background:#1e293b;color:white;border:1px solid #374151;padding:8px 16px;cursor:pointer;border-radius:6px;margin-right:5px;font-size:13px}
+.tab-btn.active{background:#16a34a;border-color:#16a34a}
 </style>
 </head>
 <body>
 
 <h1>Envizom API Monitor</h1>
 
-<button onclick="show('login')">Login</button>
-<button onclick="show('overview')">Overview</button>
-<button onclick="show('widget')">Dashboard Widget</button>
-<button onclick="show('table')">Dashboard Table</button>
+<div class="summary">
+  <span>Login: ${loginApis.length} APIs</span>
+  <span>Overview: ${overviewApis.length} APIs</span>
+  <span>Widget: ${dashboardWidgetApis.length} APIs</span>
+  <span>Table: ${dashboardTableApis.length} APIs</span>
+  <span>Total: ${loginApis.length + overviewApis.length + dashboardWidgetApis.length + dashboardTableApis.length} APIs</span>
+</div>
 
-<div id="login" class="card">${table(loginApis,'login')}</div>
-<div id="overview" class="card">${table(overviewApis,'overview')}</div>
-<div id="widget" class="card">${table(dashboardWidgetApis,'widget')}</div>
-<div id="table" class="card">${table(dashboardTableApis,'table')}</div>
+<button class="tab-btn active" onclick="show('login',this)">Login (${loginApis.length})</button>
+<button class="tab-btn" onclick="show('overview',this)">Overview (${overviewApis.length})</button>
+<button class="tab-btn" onclick="show('widget',this)">Dashboard Widget (${dashboardWidgetApis.length})</button>
+<button class="tab-btn" onclick="show('table',this)">Dashboard Table (${dashboardTableApis.length})</button>
+
+<div id="login" class="card">${table(loginApis, 'login')}</div>
+<div id="overview" class="card">${table(overviewApis, 'overview')}</div>
+<div id="widget" class="card">${table(dashboardWidgetApis, 'widget')}</div>
+<div id="table" class="card">${table(dashboardTableApis, 'table')}</div>
 
 <script>
-function show(id){
+function show(id, btn){
  document.querySelectorAll('.card').forEach(c=>c.style.display='none');
  document.getElementById(id).style.display='block';
+ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+ if(btn) btn.classList.add('active');
 }
 function toggleJson(id){
  const el=document.getElementById(id);
  el.style.display=el.style.display==='block'?'none':'block';
 }
-show('login');
+show('login', document.querySelector('.tab-btn'));
 </script>
 
 </body>
@@ -283,13 +366,10 @@ show('login');
 
   /* ================= GOOGLE SHEET ================= */
 
-   await updateGoogleSheet('Login', loginApis);
-   await updateGoogleSheet('Overview AQI', overviewApis);
-   await updateGoogleSheet('Dashboard Widget', dashboardWidgetApis);
-   await updateGoogleSheet('Dashboard Table', dashboardTableApis);
-  console.log('FLOW COMPLETE');
+  await updateGoogleSheet('Login', loginApis);
+  await updateGoogleSheet('Overview AQI', overviewApis);
+  await updateGoogleSheet('Dashboard Widget', dashboardWidgetApis);
+  await updateGoogleSheet('Dashboard Table', dashboardTableApis);
+
+  console.log('✅ FLOW COMPLETE');
 });
-
-
-
-

@@ -326,9 +326,13 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   // STEP 2 — Select "Polludrone" from Device Type dropdown
   const deviceTypeSelect = page.locator('mat-select[formcontrolname="deviceType"]');
   await deviceTypeSelect.click({ force: true });
+
+  // Wait for single-select panel to open
+  await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="false"]', { timeout: 10000 });
   await wait(1000);
 
-  const polludroneOption = page.locator('.mat-mdc-option').filter({ hasText: /polludrone/i });
+  // Click POLLUDRONE option
+  const polludroneOption = page.locator('.mat-mdc-select-panel mat-option .mdc-list-item__primary-text').filter({ hasText: /POLLUDRONE/i });
   await polludroneOption.first().click();
   await wait(1000);
 
@@ -342,27 +346,44 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   // STEP 4 — Click Next
   const nextBtn1 = page.getByRole('button', { name: /next/i });
   await nextBtn1.click({ force: true });
-  await wait(3000);
+  await wait(5000);
 
-  // STEP 5 — Select 2-3 devices from multi-select dropdown
+  // STEP 5 — Select 2-3 devices from multi-select dropdown (NOT "Select All")
   const selectDevices = page.locator('mat-select[formcontrolname="selectedDevicesControl"]');
+  await selectDevices.waitFor({ state: 'visible', timeout: 10000 });
   await selectDevices.click({ force: true });
+
+  // Wait for multi-select panel to open
+  await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
   await wait(2000);
 
-  const deviceOptions = page.locator('.mat-mdc-option');
+  // Target only mat-option elements (skip the "Select All" mat-checkbox)
+  const deviceOptions = page.locator('.mat-mdc-select-panel[aria-multiselectable="true"] mat-option.mat-mdc-option-multiple');
   const deviceCount = await deviceOptions.count();
 
-  if (deviceCount === 0)
-    throw new Error('No devices found in cluster device list');
+  if (deviceCount === 0) {
+    // Retry — close and reopen the dropdown
+    console.log('⚠️ No devices on first try, retrying dropdown...');
+    await page.keyboard.press('Escape');
+    await wait(2000);
+    await selectDevices.click({ force: true });
+    await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
+    await wait(3000);
+  }
 
-  const devicesToSelect = Math.min(3, deviceCount);
+  const finalDeviceCount = await deviceOptions.count();
+  if (finalDeviceCount === 0)
+    throw new Error('No devices found in cluster device list after retry');
+
+  // Select first 2-3 devices (never "Select All")
+  const devicesToSelect = Math.min(3, finalDeviceCount);
   for (let i = 0; i < devicesToSelect; i++) {
     await deviceOptions.nth(i).click();
     await wait(500);
   }
 
-  // Close the dropdown by clicking outside
-  await page.locator('body').click({ position: { x: 10, y: 10 }, force: true });
+  // Close the dropdown by pressing Escape
+  await page.keyboard.press('Escape');
   await wait(1000);
 
   // STEP 6 — Click Next (second time)

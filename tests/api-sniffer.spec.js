@@ -124,11 +124,26 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
       json: json.substring(0, 1500)
     };
 
-    // Push ALL captured APIs into the current phase bucket — no filtering
-    if (phase === 'login')                loginApis.push(api);
-    else if (phase === 'overview')        overviewApis.push(api);
-    else if (phase === 'dashboard-widget') dashboardWidgetApis.push(api);
-    else if (phase === 'dashboard-table')  dashboardTableApis.push(api);
+    // Login & Widget → capture ALL APIs
+    // Overview & Table → capture ONLY the last /devices/data? call
+    if (phase === 'login') {
+      loginApis.push(api);
+    }
+    else if (phase === 'overview') {
+      if (api.method === 'GET' && url.includes('/devices/data?')) {
+        overviewApis.length = 0;
+        overviewApis.push(api);
+      }
+    }
+    else if (phase === 'dashboard-widget') {
+      dashboardWidgetApis.push(api);
+    }
+    else if (phase === 'dashboard-table') {
+      if (api.method === 'GET' && url.includes('/devices/data?')) {
+        dashboardTableApis.length = 0;
+        dashboardTableApis.push(api);
+      }
+    }
   });
 
   /* ================= LOGIN ================= */
@@ -202,12 +217,8 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   phase = 'overview';
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
 
-  // Wait for key overview APIs
+  // Wait for the /devices/data? API (the only one we capture for overview)
   await Promise.allSettled([
-    page.waitForResponse(
-      r => r.url().includes('/overview/v2'),
-      { timeout: 15000 }
-    ),
     page.waitForResponse(
       r => r.url().includes('/devices/data?'),
       { timeout: 15000 }
@@ -215,7 +226,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   ]).then(results => {
     const failed = results.filter(r => r.status === 'rejected');
     if (failed.length) {
-      console.log(`⚠️ ${failed.length} overview API(s) did not fire within timeout`);
+      console.log(`⚠️ Overview /devices/data? API did not fire within timeout`);
     }
   });
 

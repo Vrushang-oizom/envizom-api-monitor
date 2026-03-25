@@ -181,16 +181,29 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   await killOverlays();
 
-  // Wait for ALL critical login-phase APIs before switching phase
+  // Wait for ALL 5 critical login-phase APIs before switching phase
+  // Track overview/v2 calls — there are 2 (without token, then with lastUpdatedToken)
+  let overviewV2Count = 0;
+  const overviewV2Done = new Promise((resolve) => {
+    const handler = (response) => {
+      if (response.url().includes('/overview/v2')) {
+        overviewV2Count++;
+        if (overviewV2Count >= 2) {
+          page.off('response', handler);
+          resolve();
+        }
+      }
+    };
+    page.on('response', handler);
+    setTimeout(() => { page.off('response', handler); resolve(); }, 20000);
+  });
+
   await Promise.allSettled([
     page.waitForResponse(
       r => r.url().includes('/users/login/v2'),
       { timeout: 15000 }
     ),
-    page.waitForResponse(
-      r => r.url().includes('/overview/v2'),
-      { timeout: 15000 }
-    ),
+    overviewV2Done,
     page.waitForResponse(
       r => r.url().includes('/devices/data?'),
       { timeout: 15000 }
@@ -204,6 +217,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     if (failed.length) {
       console.log(`⚠️ ${failed.length} login API(s) did not fire within timeout`);
     }
+    console.log(`📡 overview/v2 calls detected: ${overviewV2Count}/2`);
   });
 
   // Extra buffer for any trailing responses

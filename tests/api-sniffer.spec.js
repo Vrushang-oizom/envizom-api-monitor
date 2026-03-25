@@ -376,7 +376,8 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   if (deviceCount === 0) {
     console.log('⚠️ No devices on first try, retrying dropdown...');
-    await page.locator('.cdk-overlay-backdrop').click({ force: true }).catch(() => {});
+    // Close dropdown by clicking the dialog heading (safe area)
+    await page.locator('text=Add Cluster').first().click({ force: true }).catch(() => {});
     await wait(2000);
     await selectDevices.click({ force: true });
     await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
@@ -393,8 +394,8 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     await wait(500);
   }
 
-  // Close the dropdown by clicking on the backdrop (NOT Escape — that closes the whole dialog)
-  await page.locator('.cdk-overlay-backdrop').click({ force: true }).catch(() => {});
+  // Close the dropdown by clicking the dialog heading (safe area — NOT backdrop or Escape)
+  await page.locator('text=Add Cluster').first().click({ force: true }).catch(() => {});
   await wait(1000);
   await page.screenshot({ path: 'docs/cluster-step5-devices-selected.png', fullPage: true });
 

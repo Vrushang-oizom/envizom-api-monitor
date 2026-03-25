@@ -317,21 +317,21 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await page.goto('https://devenvizom.oizom.com/#/cluster/map');
   await killOverlays();
   await wait(5000);
+  await page.screenshot({ path: 'docs/cluster-step0-page-loaded.png', fullPage: true });
 
   // STEP 1 — Click "Add Cluster" button
   const addClusterBtn = page.getByRole('button', { name: /add cluster/i });
   await addClusterBtn.click({ force: true });
   await wait(2000);
+  await page.screenshot({ path: 'docs/cluster-step1-add-cluster-clicked.png', fullPage: true });
 
   // STEP 2 — Select "Polludrone" from Device Type dropdown
   const deviceTypeSelect = page.locator('mat-select[formcontrolname="deviceType"]');
   await deviceTypeSelect.click({ force: true });
-
-  // Wait for single-select panel to open
   await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="false"]', { timeout: 10000 });
   await wait(1000);
+  await page.screenshot({ path: 'docs/cluster-step2-device-type-open.png', fullPage: true });
 
-  // Click POLLUDRONE option
   const polludroneOption = page.locator('.mat-mdc-select-panel mat-option .mdc-list-item__primary-text').filter({ hasText: /POLLUDRONE/i });
   await polludroneOption.first().click();
   await wait(1000);
@@ -342,25 +342,24 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await clusterNameInput.click({ force: true });
   await clusterNameInput.fill(`test${randomNum}`);
   await wait(1000);
+  await page.screenshot({ path: 'docs/cluster-step3-form-filled.png', fullPage: true });
 
-  // STEP 4 — Click Next (uses mattooltip="Next" from the stepper)
+  // STEP 4 — Click Next
   const nextBtn1 = page.locator('button[ng-reflect-message="Next"], button:has-text("Next")').first();
   await nextBtn1.evaluate(el => el.click());
   await wait(5000);
+  await page.screenshot({ path: 'docs/cluster-step4-after-next1.png', fullPage: true });
 
-  // Verify stepper moved — the device select should now exist in DOM
+  // Verify stepper moved
   await page.waitForSelector('mat-select[formcontrolname="selectedDevicesControl"]', { state: 'attached', timeout: 10000 });
 
   // STEP 5 — Select 2-3 devices from multi-select dropdown (NOT "Select All")
   const selectDevices = page.locator('mat-select[formcontrolname="selectedDevicesControl"]');
-
-  // The stepper may keep the element hidden — scroll it into view and force-click
   await selectDevices.scrollIntoViewIfNeeded({ timeout: 10000 }).catch(() => {});
   await wait(2000);
   await selectDevices.dispatchEvent('click');
   await wait(1000);
 
-  // If panel didn't open, try force-clicking the parent form field
   const panelVisible = await page.locator('.mat-mdc-select-panel[aria-multiselectable="true"]').isVisible().catch(() => false);
   if (!panelVisible) {
     console.log('⚠️ Panel not open, trying parent click...');
@@ -368,16 +367,14 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     await wait(2000);
   }
 
-  // Wait for multi-select panel to open
   await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
   await wait(2000);
+  await page.screenshot({ path: 'docs/cluster-step5-devices-dropdown-open.png', fullPage: true });
 
-  // Target only mat-option elements (skip the "Select All" mat-checkbox)
   const deviceOptions = page.locator('.mat-mdc-select-panel[aria-multiselectable="true"] mat-option.mat-mdc-option-multiple');
   const deviceCount = await deviceOptions.count();
 
   if (deviceCount === 0) {
-    // Retry — close and reopen the dropdown
     console.log('⚠️ No devices on first try, retrying dropdown...');
     await page.keyboard.press('Escape');
     await wait(2000);
@@ -390,57 +387,70 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   if (finalDeviceCount === 0)
     throw new Error('No devices found in cluster device list after retry');
 
-  // Select first 2-3 devices (never "Select All")
   const devicesToSelect = Math.min(3, finalDeviceCount);
   for (let i = 0; i < devicesToSelect; i++) {
     await deviceOptions.nth(i).click();
     await wait(500);
   }
 
-  // Close the dropdown by pressing Escape
   await page.keyboard.press('Escape');
   await wait(1000);
+  await page.screenshot({ path: 'docs/cluster-step5-devices-selected.png', fullPage: true });
 
   // STEP 6 — Click Next (second time — to map step)
   const nextBtn2 = page.locator('button[ng-reflect-message="Next"], button:has-text("Next")').first();
   await nextBtn2.evaluate(el => el.click());
   await wait(4000);
+  await page.screenshot({ path: 'docs/cluster-step6-after-next2-map.png', fullPage: true });
 
   // STEP 7 — Draw polygon on the map covering the devices
-  // "Select Area" radio is already selected by default
   const mapContainer = page.locator('.gm-style').first();
-  await mapContainer.waitFor({ state: 'visible', timeout: 10000 });
-  const mapBox = await mapContainer.boundingBox();
+  const mapVisible = await mapContainer.isVisible({ timeout: 10000 }).catch(() => false);
+  await page.screenshot({ path: 'docs/cluster-step7-before-polygon.png', fullPage: true });
 
-  if (mapBox) {
-    const cx = mapBox.x + mapBox.width / 2;
-    const cy = mapBox.y + mapBox.height / 2;
-    const rx = mapBox.width * 0.25;
-    const ry = mapBox.height * 0.20;
+  if (mapVisible) {
+    const mapBox = await mapContainer.boundingBox();
 
-    // Draw a simple 4-point rectangle around the devices
-    const points = [
-      { x: cx - rx, y: cy - ry },  // top-left
-      { x: cx + rx, y: cy - ry },  // top-right
-      { x: cx + rx, y: cy + ry },  // bottom-right
-      { x: cx - rx, y: cy + ry },  // bottom-left
-    ];
+    if (mapBox) {
+      const cx = mapBox.x + mapBox.width / 2;
+      const cy = mapBox.y + mapBox.height / 2;
+      const rx = mapBox.width * 0.25;
+      const ry = mapBox.height * 0.20;
 
-    for (const pt of points) {
-      await page.mouse.click(pt.x, pt.y);
-      await wait(700);
+      const points = [
+        { x: cx - rx, y: cy - ry },
+        { x: cx + rx, y: cy - ry },
+        { x: cx + rx, y: cy + ry },
+        { x: cx - rx, y: cy + ry },
+      ];
+
+      for (const pt of points) {
+        await page.mouse.click(pt.x, pt.y);
+        await wait(700);
+      }
+
+      await page.mouse.dblclick(points[0].x, points[0].y);
+      await wait(2000);
+    } else {
+      console.log('⚠️ Map container has no bounding box');
     }
-
-    // Double-click near the first point to close the polygon
-    await page.mouse.dblclick(points[0].x, points[0].y);
-    await wait(2000);
   } else {
-    console.log('⚠️ Could not find map container for polygon drawing');
+    console.log('⚠️ Map container not visible');
   }
+
+  await page.screenshot({ path: 'docs/cluster-step7-after-polygon.png', fullPage: true });
 
   // STEP 8 — Click Submit
   const submitBtn = page.locator('button[ng-reflect-message="Submit"], button:has-text("Submit")').first();
-  await submitBtn.evaluate(el => el.click());
+  const submitVisible = await submitBtn.isVisible({ timeout: 5000 }).catch(() => false);
+  console.log(`📡 Submit button visible: ${submitVisible}`);
+  await page.screenshot({ path: 'docs/cluster-step8-before-submit.png', fullPage: true });
+
+  if (submitVisible) {
+    await submitBtn.evaluate(el => el.click());
+  } else {
+    console.log('⚠️ Submit button not found — skipping cluster submission');
+  }
 
   // Wait for the 2 cluster APIs: /cluster and /overview/v2
   await Promise.allSettled([

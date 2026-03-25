@@ -81,6 +81,7 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   const overviewApis = [];
   const dashboardWidgetApis = [];
   const dashboardTableApis = [];
+  const clusterApis = [];
 
   let phase = 'login';
 
@@ -124,8 +125,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
       json: json.substring(0, 1500)
     };
 
-    // Login & Widget → capture ALL APIs
-    // Overview & Table → capture ONLY the last /devices/data? call
     if (phase === 'login') {
       loginApis.push(api);
     }
@@ -142,6 +141,11 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
       if (api.method === 'GET' && url.includes('/devices/data?')) {
         dashboardTableApis.length = 0;
         dashboardTableApis.push(api);
+      }
+    }
+    else if (phase === 'cluster') {
+      if (url.includes('/cluster') || url.includes('/overview/v2')) {
+        clusterApis.push(api);
       }
     }
   });
@@ -182,7 +186,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await killOverlays();
 
   // Wait for ALL 5 critical login-phase APIs before switching phase
-  // Track overview/v2 calls — there are 2 (without token, then with lastUpdatedToken)
   let overviewV2Count = 0;
   const overviewV2Done = new Promise((resolve) => {
     const handler = (response) => {
@@ -220,7 +223,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     console.log(`📡 overview/v2 calls detected: ${overviewV2Count}/2`);
   });
 
-  // Extra buffer for any trailing responses
   await wait(3000);
 
   console.log(`🔥 LOGIN APIs CAPTURED: ${loginApis.length}`);
@@ -231,7 +233,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   phase = 'overview';
   await page.goto('https://devenvizom.oizom.com/#/overview/aqi');
 
-  // Wait for the /devices/data? API (the only one we capture for overview)
   await Promise.allSettled([
     page.waitForResponse(
       r => r.url().includes('/devices/data?'),
@@ -270,7 +271,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   await options.nth(Math.floor(Math.random() * count)).click();
 
-  // Wait for widget APIs to resolve
   await Promise.allSettled([
     page.waitForResponse(
       r => r.url().includes('/devices/data?'),
@@ -294,7 +294,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
 
   phase = 'dashboard-table';
 
-  // Wait for table APIs to resolve
   await Promise.allSettled([
     page.waitForResponse(
       r => r.url().includes('/devices/data?'),
@@ -312,9 +311,136 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   console.log(`🔥 TABLE APIs CAPTURED: ${dashboardTableApis.length}`);
   dashboardTableApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
 
+  /* ================= CLUSTER ================= */
+
+  phase = 'cluster';
+  await page.goto('https://devenvizom.oizom.com/#/cluster/map');
+  await killOverlays();
+  await wait(5000);
+
+  // STEP 1 — Click "Add Cluster" button
+  const addClusterBtn = page.getByRole('button', { name: /add cluster/i });
+  await addClusterBtn.click({ force: true });
+  await wait(2000);
+
+  // STEP 2 — Select "Polludrone" from Device Type dropdown
+  const deviceTypeSelect = page.locator('mat-select[formcontrolname="deviceType"]');
+  await deviceTypeSelect.click({ force: true });
+  await wait(1000);
+
+  const polludroneOption = page.locator('.mat-mdc-option').filter({ hasText: /polludrone/i });
+  await polludroneOption.first().click();
+  await wait(1000);
+
+  // STEP 3 — Enter random cluster name
+  const randomNum = Math.floor(Math.random() * 100000);
+  const clusterNameInput = page.locator('input[formcontrolname="clusterName"]');
+  await clusterNameInput.click({ force: true });
+  await clusterNameInput.fill(`test${randomNum}`);
+  await wait(1000);
+
+  // STEP 4 — Click Next
+  const nextBtn1 = page.getByRole('button', { name: /next/i });
+  await nextBtn1.click({ force: true });
+  await wait(3000);
+
+  // STEP 5 — Select 2-3 devices from multi-select dropdown
+  const selectDevices = page.locator('mat-select[formcontrolname="selectedDevicesControl"]');
+  await selectDevices.click({ force: true });
+  await wait(2000);
+
+  const deviceOptions = page.locator('.mat-mdc-option');
+  const deviceCount = await deviceOptions.count();
+
+  if (deviceCount === 0)
+    throw new Error('No devices found in cluster device list');
+
+  const devicesToSelect = Math.min(3, deviceCount);
+  for (let i = 0; i < devicesToSelect; i++) {
+    await deviceOptions.nth(i).click();
+    await wait(500);
+  }
+
+  // Close the dropdown by clicking outside
+  await page.locator('body').click({ position: { x: 10, y: 10 }, force: true });
+  await wait(1000);
+
+  // STEP 6 — Click Next (second time)
+  const nextBtn2 = page.getByRole('button', { name: /next/i });
+  await nextBtn2.click({ force: true });
+  await wait(4000);
+
+  // STEP 7 — Draw polygon on the map covering the devices
+  // "Select Area" radio is already selected by default
+  const mapContainer = page.locator('.gm-style').first();
+  await mapContainer.waitFor({ state: 'visible', timeout: 10000 });
+  const mapBox = await mapContainer.boundingBox();
+
+  if (mapBox) {
+    const cx = mapBox.x + mapBox.width / 2;
+    const cy = mapBox.y + mapBox.height / 2;
+    const rx = mapBox.width * 0.25;
+    const ry = mapBox.height * 0.20;
+
+    // Draw a simple 4-point rectangle around the devices
+    const points = [
+      { x: cx - rx, y: cy - ry },  // top-left
+      { x: cx + rx, y: cy - ry },  // top-right
+      { x: cx + rx, y: cy + ry },  // bottom-right
+      { x: cx - rx, y: cy + ry },  // bottom-left
+    ];
+
+    for (const pt of points) {
+      await page.mouse.click(pt.x, pt.y);
+      await wait(700);
+    }
+
+    // Double-click near the first point to close the polygon
+    await page.mouse.dblclick(points[0].x, points[0].y);
+    await wait(2000);
+  } else {
+    console.log('⚠️ Could not find map container for polygon drawing');
+  }
+
+  // STEP 8 — Click Submit
+  const submitBtn = page.getByRole('button', { name: /submit/i });
+  await submitBtn.click({ force: true });
+
+  // Wait for the 2 cluster APIs: /cluster and /overview/v2
+  await Promise.allSettled([
+    page.waitForResponse(
+      r => r.url().includes('/cluster'),
+      { timeout: 15000 }
+    ),
+    page.waitForResponse(
+      r => r.url().includes('/overview/v2'),
+      { timeout: 15000 }
+    ),
+  ]).then(results => {
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length) {
+      console.log(`⚠️ ${failed.length} cluster API(s) did not fire within timeout`);
+    }
+  });
+
+  await wait(3000);
+
+  console.log(`🔥 CLUSTER APIs CAPTURED: ${clusterApis.length}`);
+  clusterApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
+
   /* ================= HTML REPORT ================= */
 
-  const table = (data, section) => `
+  const allSections = [
+    { id: 'login',      label: 'Login',             data: loginApis },
+    { id: 'overview',   label: 'Overview',           data: overviewApis },
+    { id: 'widget',     label: 'Dashboard Widget',   data: dashboardWidgetApis },
+    { id: 'table',      label: 'Dashboard Table',    data: dashboardTableApis },
+    { id: 'cluster',    label: 'Cluster',            data: clusterApis },
+  ];
+
+  const totalApis = allSections.reduce((sum, s) => sum + s.data.length, 0);
+
+  const tableHtml = (data, section) => `
 <table>
 <tr><th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th></tr>
 ${data.map((a, i) => `
@@ -341,9 +467,10 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 .url{max-width:420px;word-break:break-all}
 .json-btn{background:#16a34a;color:white;border:none;padding:5px 10px;cursor:pointer;border-radius:4px}
 .json-box{display:none;background:black;color:#22c55e;max-height:220px;overflow:auto;padding:8px;font-size:11px}
-.summary{background:#1e293b;padding:12px;border-radius:8px;margin-bottom:15px}
-.summary span{margin-right:20px;font-size:14px}
-.tab-btn{background:#1e293b;color:white;border:1px solid #374151;padding:8px 16px;cursor:pointer;border-radius:6px;margin-right:5px;font-size:13px}
+.summary{background:#1e293b;padding:12px;border-radius:8px;margin-bottom:15px;display:flex;flex-wrap:wrap;gap:10px}
+.summary span{font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px}
+.tab-btn{background:#1e293b;color:white;border:1px solid #374151;padding:8px 16px;cursor:pointer;border-radius:6px;font-size:13px}
 .tab-btn.active{background:#16a34a;border-color:#16a34a}
 </style>
 </head>
@@ -352,22 +479,15 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 <h1>Envizom API Monitor</h1>
 
 <div class="summary">
-  <span>Login: ${loginApis.length} APIs</span>
-  <span>Overview: ${overviewApis.length} APIs</span>
-  <span>Widget: ${dashboardWidgetApis.length} APIs</span>
-  <span>Table: ${dashboardTableApis.length} APIs</span>
-  <span>Total: ${loginApis.length + overviewApis.length + dashboardWidgetApis.length + dashboardTableApis.length} APIs</span>
+${allSections.map(s => `  <span>${s.label}: ${s.data.length} APIs</span>`).join('\n')}
+  <span><strong>Total: ${totalApis} APIs</strong></span>
 </div>
 
-<button class="tab-btn active" onclick="show('login',this)">Login (${loginApis.length})</button>
-<button class="tab-btn" onclick="show('overview',this)">Overview (${overviewApis.length})</button>
-<button class="tab-btn" onclick="show('widget',this)">Dashboard Widget (${dashboardWidgetApis.length})</button>
-<button class="tab-btn" onclick="show('table',this)">Dashboard Table (${dashboardTableApis.length})</button>
+<div class="tabs">
+${allSections.map((s, i) => `  <button class="tab-btn${i === 0 ? ' active' : ''}" onclick="show('${s.id}',this)">${s.label} (${s.data.length})</button>`).join('\n')}
+</div>
 
-<div id="login" class="card">${table(loginApis, 'login')}</div>
-<div id="overview" class="card">${table(overviewApis, 'overview')}</div>
-<div id="widget" class="card">${table(dashboardWidgetApis, 'widget')}</div>
-<div id="table" class="card">${table(dashboardTableApis, 'table')}</div>
+${allSections.map(s => `<div id="${s.id}" class="card">${tableHtml(s.data, s.id)}</div>`).join('\n')}
 
 <script>
 function show(id, btn){
@@ -395,6 +515,7 @@ show('login', document.querySelector('.tab-btn'));
   await updateGoogleSheet('Overview AQI', overviewApis);
   await updateGoogleSheet('Dashboard Widget', dashboardWidgetApis);
   await updateGoogleSheet('Dashboard Table', dashboardTableApis);
+  await updateGoogleSheet('Cluster', clusterApis);
 
   console.log('✅ FLOW COMPLETE');
 });

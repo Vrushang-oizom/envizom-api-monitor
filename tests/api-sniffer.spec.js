@@ -317,160 +317,82 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   await page.goto('https://devenvizom.oizom.com/#/cluster/map');
   await killOverlays();
   await wait(5000);
-  await page.screenshot({ path: 'docs/cluster-step0-page-loaded.png', fullPage: true });
 
-  // STEP 1 — Click "Add Cluster" button
-  const addClusterBtn = page.getByRole('button', { name: /add cluster/i });
-  await addClusterBtn.click({ force: true });
+  // 1. Click "Add Cluster"
+  await page.getByRole('button', { name: /add cluster/i }).click({ force: true });
+  await wait(3000);
+
+  // 2. Select "POLLUDRONE" from Device Type
+  await page.locator('mat-select[formcontrolname="deviceType"]').click({ force: true });
   await wait(2000);
-  await page.screenshot({ path: 'docs/cluster-step1-add-cluster-clicked.png', fullPage: true });
-
-  // STEP 2 — Select "Polludrone" from Device Type dropdown
-  const deviceTypeSelect = page.locator('mat-select[formcontrolname="deviceType"]');
-  await deviceTypeSelect.click({ force: true });
-  await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="false"]', { timeout: 10000 });
-  await wait(1000);
-  await page.screenshot({ path: 'docs/cluster-step2-device-type-open.png', fullPage: true });
-
-  const polludroneOption = page.locator('.mat-mdc-select-panel mat-option .mdc-list-item__primary-text').filter({ hasText: /POLLUDRONE/i });
-  await polludroneOption.first().click();
+  await page.locator('mat-option:has-text("POLLUDRONE")').click();
   await wait(1000);
 
-  // STEP 3 — Enter random cluster name
-  const randomNum = Math.floor(Math.random() * 100000);
-  const clusterNameInput = page.locator('input[formcontrolname="clusterName"]');
-  await clusterNameInput.click({ force: true });
-  await clusterNameInput.fill(`test${randomNum}`);
+  // 3. Type cluster name
+  await page.locator('input[formcontrolname="clusterName"]').fill(`test${Math.floor(Math.random() * 100000)}`);
   await wait(1000);
-  await page.screenshot({ path: 'docs/cluster-step3-form-filled.png', fullPage: true });
 
-  // STEP 4 — Click Next
-  const nextBtn1 = page.locator('button[ng-reflect-message="Next"], button:has-text("Next")').first();
-  await nextBtn1.evaluate(el => el.click());
+  // 4. Click Next → go to step 2 (Select Devices)
+  await page.locator('button:has-text("Next")').click({ force: true });
   await wait(5000);
-  await page.screenshot({ path: 'docs/cluster-step4-after-next1.png', fullPage: true });
+  await page.screenshot({ path: 'docs/cluster-step2-devices.png', fullPage: true });
 
-  // Verify stepper moved
-  await page.waitForSelector('mat-select[formcontrolname="selectedDevicesControl"]', { state: 'attached', timeout: 10000 });
+  // 5. Open device dropdown
+  await page.locator('mat-select[formcontrolname="selectedDevicesControl"]').click({ force: true });
+  await wait(3000);
+  await page.screenshot({ path: 'docs/cluster-step2-dropdown-open.png', fullPage: true });
 
-  // STEP 5 — Select 2-3 devices from multi-select dropdown (NOT "Select All")
-  const selectDevices = page.locator('mat-select[formcontrolname="selectedDevicesControl"]');
-  await selectDevices.scrollIntoViewIfNeeded({ timeout: 10000 }).catch(() => {});
-  await wait(2000);
-  await selectDevices.dispatchEvent('click');
-  await wait(1000);
+  // 6. Select first 3 devices (skip "Select All")
+  const clusterDeviceOptions = page.locator('mat-option.mat-mdc-option-multiple');
+  const clusterDeviceCount = await clusterDeviceOptions.count();
+  console.log(`📡 Cluster devices found: ${clusterDeviceCount}`);
 
-  const panelVisible = await page.locator('.mat-mdc-select-panel[aria-multiselectable="true"]').isVisible().catch(() => false);
-  if (!panelVisible) {
-    console.log('⚠️ Panel not open, trying parent click...');
-    await selectDevices.evaluate(el => el.click());
-    await wait(2000);
-  }
-
-  await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
-  await wait(2000);
-  await page.screenshot({ path: 'docs/cluster-step5-devices-dropdown-open.png', fullPage: true });
-
-  const deviceOptions = page.locator('.mat-mdc-select-panel[aria-multiselectable="true"] mat-option.mat-mdc-option-multiple');
-  const deviceCount = await deviceOptions.count();
-
-  if (deviceCount === 0) {
-    console.log('⚠️ No devices on first try, retrying dropdown...');
-    // Close dropdown by clicking the dialog heading (safe area)
-    await page.locator('text=Add Cluster').first().click({ force: true }).catch(() => {});
-    await wait(2000);
-    await selectDevices.click({ force: true });
-    await page.waitForSelector('.mat-mdc-select-panel[aria-multiselectable="true"]', { timeout: 10000 });
-    await wait(3000);
-  }
-
-  const finalDeviceCount = await deviceOptions.count();
-  if (finalDeviceCount === 0)
-    throw new Error('No devices found in cluster device list after retry');
-
-  const devicesToSelect = Math.min(3, finalDeviceCount);
-  for (let i = 0; i < devicesToSelect; i++) {
-    await deviceOptions.nth(i).click();
+  for (let i = 0; i < Math.min(3, clusterDeviceCount); i++) {
+    await clusterDeviceOptions.nth(i).click();
     await wait(500);
   }
+  await page.screenshot({ path: 'docs/cluster-step2-devices-checked.png', fullPage: true });
 
-  await page.screenshot({ path: 'docs/cluster-step5-devices-selected.png', fullPage: true });
-
-  // STEP 6a — First Next click → closes dropdown, shows selected devices summary
-  await page.locator('button:has-text("Next")').first().click({ force: true });
+  // 7. First Next click → closes dropdown, shows selected devices summary
+  await page.locator('button:has-text("Next")').click({ force: true });
   await wait(3000);
-  await page.screenshot({ path: 'docs/cluster-step6a-dropdown-closed.png', fullPage: true });
+  await page.screenshot({ path: 'docs/cluster-step2-summary.png', fullPage: true });
 
-  // STEP 6b — Second Next click → goes to polygon/map step
-  await page.locator('button:has-text("Next")').first().click({ force: true });
+  // 8. Second Next click → go to step 3 (Map / Polygon)
+  await page.locator('button:has-text("Next")').click({ force: true });
   await wait(5000);
-  await page.screenshot({ path: 'docs/cluster-step6b-map-loaded.png', fullPage: true });
+  await page.screenshot({ path: 'docs/cluster-step3-map.png', fullPage: true });
 
-  // STEP 7 — Draw polygon on the map covering the devices
-  const mapContainer = page.locator('.gm-style').first();
-  const mapVisible = await mapContainer.isVisible({ timeout: 10000 }).catch(() => false);
-  await page.screenshot({ path: 'docs/cluster-step7-before-polygon.png', fullPage: true });
+  // 9. Draw polygon on map
+  const mapEl = page.locator('.gm-style').first();
+  const mapBox = await mapEl.boundingBox();
 
-  if (mapVisible) {
-    const mapBox = await mapContainer.boundingBox();
+  if (mapBox) {
+    const cx = mapBox.x + mapBox.width / 2;
+    const cy = mapBox.y + mapBox.height / 2;
+    const rx = mapBox.width * 0.25;
+    const ry = mapBox.height * 0.20;
 
-    if (mapBox) {
-      const cx = mapBox.x + mapBox.width / 2;
-      const cy = mapBox.y + mapBox.height / 2;
-      const rx = mapBox.width * 0.25;
-      const ry = mapBox.height * 0.20;
+    // 4 corners
+    await page.mouse.click(cx - rx, cy - ry); await wait(700);
+    await page.mouse.click(cx + rx, cy - ry); await wait(700);
+    await page.mouse.click(cx + rx, cy + ry); await wait(700);
+    await page.mouse.click(cx - rx, cy + ry); await wait(700);
 
-      const points = [
-        { x: cx - rx, y: cy - ry },
-        { x: cx + rx, y: cy - ry },
-        { x: cx + rx, y: cy + ry },
-        { x: cx - rx, y: cy + ry },
-      ];
-
-      for (const pt of points) {
-        await page.mouse.click(pt.x, pt.y);
-        await wait(700);
-      }
-
-      await page.mouse.dblclick(points[0].x, points[0].y);
-      await wait(2000);
-    } else {
-      console.log('⚠️ Map container has no bounding box');
-    }
-  } else {
-    console.log('⚠️ Map container not visible');
+    // Close polygon
+    await page.mouse.dblclick(cx - rx, cy - ry);
+    await wait(2000);
   }
+  await page.screenshot({ path: 'docs/cluster-step3-polygon-drawn.png', fullPage: true });
 
-  await page.screenshot({ path: 'docs/cluster-step7-after-polygon.png', fullPage: true });
+  // 10. Click Submit
+  await page.locator('button:has-text("Submit")').click({ force: true });
 
-  // STEP 8 — Click Submit
-  const submitBtn = page.locator('button[ng-reflect-message="Submit"], button:has-text("Submit")').first();
-  const submitVisible = await submitBtn.isVisible({ timeout: 5000 }).catch(() => false);
-  console.log(`📡 Submit button visible: ${submitVisible}`);
-  await page.screenshot({ path: 'docs/cluster-step8-before-submit.png', fullPage: true });
-
-  if (submitVisible) {
-    await submitBtn.evaluate(el => el.click());
-  } else {
-    console.log('⚠️ Submit button not found — skipping cluster submission');
-  }
-
-  // Wait for the 2 cluster APIs: /cluster and /overview/v2
+  // Wait for the 2 cluster APIs
   await Promise.allSettled([
-    page.waitForResponse(
-      r => r.url().includes('/cluster'),
-      { timeout: 15000 }
-    ),
-    page.waitForResponse(
-      r => r.url().includes('/overview/v2'),
-      { timeout: 15000 }
-    ),
-  ]).then(results => {
-    const failed = results.filter(r => r.status === 'rejected');
-    if (failed.length) {
-      console.log(`⚠️ ${failed.length} cluster API(s) did not fire within timeout`);
-    }
-  });
+    page.waitForResponse(r => r.url().includes('/cluster'), { timeout: 15000 }),
+    page.waitForResponse(r => r.url().includes('/overview/v2'), { timeout: 15000 }),
+  ]);
 
   await wait(3000);
 

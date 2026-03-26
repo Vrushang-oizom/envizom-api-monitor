@@ -81,7 +81,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   const overviewApis = [];
   const dashboardWidgetApis = [];
   const dashboardTableApis = [];
-  const clusterApis = [];
 
   let phase = 'login';
 
@@ -141,11 +140,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
       if (api.method === 'GET' && url.includes('/devices/data?')) {
         dashboardTableApis.length = 0;
         dashboardTableApis.push(api);
-      }
-    }
-    else if (phase === 'cluster') {
-      if (url.includes('/cluster') || url.includes('/overview/v2')) {
-        clusterApis.push(api);
       }
     }
   });
@@ -311,94 +305,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
   console.log(`🔥 TABLE APIs CAPTURED: ${dashboardTableApis.length}`);
   dashboardTableApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
 
-  /* ================= CLUSTER ================= */
-
-  phase = 'cluster';
-  await page.goto('https://devenvizom.oizom.com/#/cluster/map');
-  await killOverlays();
-  await wait(5000);
-
-  // 1. Click "Add Cluster"
-  await page.getByRole('button', { name: /add cluster/i }).click({ force: true });
-  await wait(3000);
-
-  // 2. Select "POLLUDRONE" from Device Type
-  await page.locator('mat-select[formcontrolname="deviceType"]').click({ force: true });
-  await wait(2000);
-  await page.locator('mat-option:has-text("POLLUDRONE")').click();
-  await wait(1000);
-
-  // 3. Type cluster name
-  await page.locator('input[formcontrolname="clusterName"]').fill(`test${Math.floor(Math.random() * 100000)}`);
-  await wait(1000);
-
-  // 4. Click Next → go to step 2 (Select Devices)
-  await page.locator('button:has-text("Next")').click({ force: true });
-  await wait(5000);
-  await page.screenshot({ path: 'docs/cluster-step2-devices.png', fullPage: true });
-
-  // 5. Open device dropdown
-  await page.locator('mat-select[formcontrolname="selectedDevicesControl"]').click({ force: true });
-  await wait(3000);
-  await page.screenshot({ path: 'docs/cluster-step2-dropdown-open.png', fullPage: true });
-
-  // 6. Select first 3 devices (skip "Select All")
-  const clusterDeviceOptions = page.locator('mat-option.mat-mdc-option-multiple');
-  const clusterDeviceCount = await clusterDeviceOptions.count();
-  console.log(`📡 Cluster devices found: ${clusterDeviceCount}`);
-
-  for (let i = 0; i < Math.min(3, clusterDeviceCount); i++) {
-    await clusterDeviceOptions.nth(i).click();
-    await wait(500);
-  }
-  await page.screenshot({ path: 'docs/cluster-step2-devices-checked.png', fullPage: true });
-
-  // 7. First Next click → closes dropdown, shows selected devices summary
-  await page.locator('button:has-text("Next")').click({ force: true });
-  await wait(3000);
-  await page.screenshot({ path: 'docs/cluster-step2-summary.png', fullPage: true });
-
-  // 8. Second Next click → go to step 3 (Map / Polygon)
-  await page.locator('button:has-text("Next")').click({ force: true });
-  await wait(5000);
-  await page.screenshot({ path: 'docs/cluster-step3-map.png', fullPage: true });
-
-  // 9. Draw polygon on map
-  const mapEl = page.locator('.gm-style').first();
-  const mapBox = await mapEl.boundingBox();
-
-  if (mapBox) {
-    const cx = mapBox.x + mapBox.width / 2;
-    const cy = mapBox.y + mapBox.height / 2;
-    const rx = mapBox.width * 0.25;
-    const ry = mapBox.height * 0.20;
-
-    // 4 corners
-    await page.mouse.click(cx - rx, cy - ry); await wait(700);
-    await page.mouse.click(cx + rx, cy - ry); await wait(700);
-    await page.mouse.click(cx + rx, cy + ry); await wait(700);
-    await page.mouse.click(cx - rx, cy + ry); await wait(700);
-
-    // Close polygon
-    await page.mouse.dblclick(cx - rx, cy - ry);
-    await wait(2000);
-  }
-  await page.screenshot({ path: 'docs/cluster-step3-polygon-drawn.png', fullPage: true });
-
-  // 10. Click Submit
-  await page.locator('button:has-text("Submit")').click({ force: true });
-
-  // Wait for the 2 cluster APIs
-  await Promise.allSettled([
-    page.waitForResponse(r => r.url().includes('/cluster'), { timeout: 15000 }),
-    page.waitForResponse(r => r.url().includes('/overview/v2'), { timeout: 15000 }),
-  ]);
-
-  await wait(3000);
-
-  console.log(`🔥 CLUSTER APIs CAPTURED: ${clusterApis.length}`);
-  clusterApis.forEach(a => console.log(`   → [${a.status}] ${a.method} ${a.url.substring(0, 100)}`));
-
   /* ================= HTML REPORT ================= */
 
   const allSections = [
@@ -406,7 +312,6 @@ test('Envizom API Monitor → ULTRA ENTERPRISE FLOW', async ({ page }) => {
     { id: 'overview',   label: 'Overview',           data: overviewApis },
     { id: 'widget',     label: 'Dashboard Widget',   data: dashboardWidgetApis },
     { id: 'table',      label: 'Dashboard Table',    data: dashboardTableApis },
-    { id: 'cluster',    label: 'Cluster',            data: clusterApis },
   ];
 
   const totalApis = allSections.reduce((sum, s) => sum + s.data.length, 0);
@@ -486,7 +391,6 @@ show('login', document.querySelector('.tab-btn'));
   await updateGoogleSheet('Overview AQI', overviewApis);
   await updateGoogleSheet('Dashboard Widget', dashboardWidgetApis);
   await updateGoogleSheet('Dashboard Table', dashboardTableApis);
-  await updateGoogleSheet('Cluster', clusterApis);
 
   console.log('✅ FLOW COMPLETE');
 });

@@ -23,15 +23,15 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 <div class="summary">
   <span>Login: 4 APIs</span>
   <span>Overview: 1 APIs</span>
-  <span>Dashboard Widget: 11 APIs</span>
+  <span>Dashboard Widget: 22 APIs</span>
   <span>Dashboard Table: 1 APIs</span>
-  <span><strong>Total: 17 APIs</strong></span>
+  <span><strong>Total: 28 APIs</strong></span>
 </div>
 
 <div class="tabs">
   <button class="tab-btn active" onclick="show('login',this)">Login (4)</button>
   <button class="tab-btn" onclick="show('overview',this)">Overview (1)</button>
-  <button class="tab-btn" onclick="show('widget',this)">Dashboard Widget (11)</button>
+  <button class="tab-btn" onclick="show('widget',this)">Dashboard Widget (22)</button>
   <button class="tab-btn" onclick="show('table',this)">Dashboard Table (1)</button>
 </div>
 
@@ -40,7 +40,7 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 <tr><th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th></tr>
 
 <tr>
-<td>13/5/2026, 9:48:38 pm</td>
+<td>14/5/2026, 12:57:42 am</td>
 <td>200</td>
 <td>POST</td>
 <td class="url">https://envdevapi.oizom.com/users/login/v2</td>
@@ -49,14 +49,14 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 <pre id="j-login-0" class="json-box">{
   "userId": 3994,
   "token": {
-    "access_token": "eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiMDhiMGQ1OGQtMWRkNC00OTJmLTg3NTQtN2E2N2RjNjZiNGM2IiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg2ODkxMTgsImV4cCI6MTc3OTI5MzkxOH0.bUeaAi5BkO5dEtMkp8KF4nIJTenhabPpdwCuH5qlZO0",
-    "expires_in": 1779293918
+    "access_token": "eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiOTQ1NWUzMTQtMmQwYS00NTRhLWE3MWQtYjEzMjEwMzcwOWEyIiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg3MDA0NjIsImV4cCI6MTc3OTMwNTI2Mn0.p0Gp8F1Y5rF0T6z55wXfl2FDPwZrBrTwETsxn7HDhRE",
+    "expires_in": 1779305262
   }
 }</pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:48:44 pm</td>
+<td>14/5/2026, 12:57:48 am</td>
 <td>200</td>
 <td>GET</td>
 <td class="url">https://envdevapi.oizom.com/users/3994/overview/v2?userId=3994&profile=auto&devices_data=auto&cluster=auto&devices=auto&units=auto&aqi_and_units=auto&module_expiry=auto&org=auto&master_org=auto&device_types=auto&complain_categories=auto&latest_features=auto&modules=auto&widgets=auto&lastUpdatedToken=</td>
@@ -140,24 +140,24 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:48:44 pm</td>
+<td>14/5/2026, 12:57:48 am</td>
 <td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/real-time/users/3994?token=eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiMDhiMGQ1OGQtMWRkNC00OTJmLTg3NTQtN2E2N2RjNjZiNGM2IiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg2ODkxMTgsImV4cCI6MTc3OTI5MzkxOH0.bUeaAi5BkO5dEtMkp8KF4nIJTenhabPpdwCuH5qlZO0</td>
+<td class="url">https://envdevapi.oizom.com/real-time/users/3994?token=eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiOTQ1NWUzMTQtMmQwYS00NTRhLWE3MWQtYjEzMjEwMzcwOWEyIiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg3MDA0NjIsImV4cCI6MTc3OTMwNTI2Mn0.p0Gp8F1Y5rF0T6z55wXfl2FDPwZrBrTwETsxn7HDhRE</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-login-2')">View JSON</button>
 <pre id="j-login-2" class="json-box"></pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:48:45 pm</td>
+<td>14/5/2026, 12:57:50 am</td>
 <td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/users/3994/overview/v2?userId=3994&profile=auto&devices_data=auto&cluster=auto&devices=auto&units=auto&aqi_and_units=auto&module_expiry=auto&org=auto&master_org=auto&device_types=auto&complain_categories=auto&latest_features=auto&modules=auto&widgets=auto&lastUpdatedToken=eyJvcmciOiJmZGFjM2M4ZmM5MzllMDUwZGE5OGNlYTE3ZDIwNGJmMGViNTU1ZmNjYzUwY2MwZWMxNzljNzQ3Yzc2MGNmNDQ3IiwibWFzdGVyX29yZyI6ImNmODI0NjNlM2ViYjVlZDE5N2E4YTc4YzBkNWE5N2E4MzIyN2ZhYjkzMjMwNmNkZDI1NTkyMTJlOGVlNmFlNmYiLCJjbHVzdGVyIjoiMTYwMGUyMGUxNTg5MDM5ZjM5OWQzZDI3ODZjZWFiMDUyODUzYzlmOWEwOTE4Y2MxOTFmNDllNDA2MjkwMmQ1OCIsImRldmljZV90eXBlcyI6ImE4MjA1NzFlYTk2ZTZjOTljZjkyMzkzZjY5NDA3NzZiNzg1ZDkxZTdmMTkxOWEyNzlkMzIxOWU4ZGRhNGNkN2EiLCJkZXZpY2VzIjoiMzZmZGNmODViZTNkYTRkNWNlYTMxY2UzMTBiMzlkOTIzZTBjZTgwMWRhN2YzYjA2NjFjZjE4MmU3ZTc2MGFmMyIsInByb2ZpbGUiOiJiNDFmNzE4ZGMzNDM5Mzk3Yjc2OTlmN2IzMjAzOTU5NDcxODAwYzRjZmI4NDBlZTc3NDkwNjg3N2RiNjE4M2VhIiwibGF0ZXN0X2ZlYXR1cmVzIjoiOGU1ZTdjN2I5OWIxYTc5ZTlkN2MxM2RmNDk1NzE3NjIwODhlMTk3MTZlNmQ2MWE4ODQ0NDc5MzVkMDBlZWU2ZSIsIndpZGdldHMiOiIyOWJlZmJjNjRlNGNlYjBkMmUzYzgyMmM5Mjk3ZjQxYjM5ZDJkODg4OGJhZTdkM2JjOWIwZDBmMTE3ODkwOTRjIiwiYXFpX2FuZF91bml0cyI6ImFlNjE1NDNkZmY2NmEzZTU1ZTYxZmI3ODg0YTQ1NmI4ZmY4ZTE0YjY5NzBmYTRlNGUwZjFhNDVjZDZjMjQwYTEiLCJjb21wbGFpbl9jYXRlZ29yaWVzIjoiY2Q3MWM3MjVhZTkwYzdiZjgyOWYwNjU5Mzc1NjZiOWYwOTFlNjYzMmNjNTk1MjAyZjI2NDIxYzdlNGNiODYyNyIsIm1vZHVsZXMiOiJjZTgxOTlmNTA1N2FkM2QzNWY3ZDc1YzQ0MWMyZGNiMDUwOWVkMDhlOTdmZThhN2I2MzIxMTc1MjkwNTIwZGNjIiwibW9kdWxlX2V4cGlyeSI6IjNhODViMTc5YmY5OGRkMjM4YWYyOTU1MTQ4NjNlYzNkYjRkOTk3NTQ4MTc1YmFjZjVmYTk5ZjgzYWNkNGJhYzkifQ==</td>
+<td class="url">https://envdevapi.oizom.com/users/3994/overview/v2?userId=3994&profile=auto&devices_data=auto&cluster=auto&devices=auto&units=auto&aqi_and_units=auto&module_expiry=auto&org=auto&master_org=auto&device_types=auto&complain_categories=auto&latest_features=auto&modules=auto&widgets=auto&lastUpdatedToken=eyJvcmciOiJmZGFjM2M4ZmM5MzllMDUwZGE5OGNlYTE3ZDIwNGJmMGViNTU1ZmNjYzUwY2MwZWMxNzljNzQ3Yzc2MGNmNDQ3IiwibWFzdGVyX29yZyI6ImNmODI0NjNlM2ViYjVlZDE5N2E4YTc4YzBkNWE5N2E4MzIyN2ZhYjkzMjMwNmNkZDI1NTkyMTJlOGVlNmFlNmYiLCJjbHVzdGVyIjoiMTYwMGUyMGUxNTg5MDM5ZjM5OWQzZDI3ODZjZWFiMDUyODUzYzlmOWEwOTE4Y2MxOTFmNDllNDA2MjkwMmQ1OCIsImRldmljZV90eXBlcyI6ImE4MjA1NzFlYTk2ZTZjOTljZjkyMzkzZjY5NDA3NzZiNzg1ZDkxZTdmMTkxOWEyNzlkMzIxOWU4ZGRhNGNkN2EiLCJkZXZpY2VzIjoiMzZmZGNmODViZTNkYTRkNWNlYTMxY2UzMTBiMzlkOTIzZTBjZTgwMWRhN2YzYjA2NjFjZjE4MmU3ZTc2MGFmMyIsInByb2ZpbGUiOiJiNDFmNzE4ZGMzNDM5Mzk3Yjc2OTlmN2IzMjAzOTU5NDcxODAwYzRjZmI4NDBlZTc3NDkwNjg3N2RiNjE4M2VhIiwiY29tcGxhaW5fY2F0ZWdvcmllcyI6ImNkNzFjNzI1YWU5MGM3YmY4MjlmMDY1OTM3NTY2YjlmMDkxZTY2MzJjYzU5NTIwMmYyNjQyMWM3ZTRjYjg2MjciLCJsYXRlc3RfZmVhdHVyZXMiOiI4ZTVlN2M3Yjk5YjFhNzllOWQ3YzEzZGY0OTU3MTc2MjA4OGUxOTcxNmU2ZDYxYTg4NDQ0NzkzNWQwMGVlZTZlIiwibW9kdWxlcyI6ImNlODE5OWY1MDU3YWQzZDM1ZjdkNzVjNDQxYzJkY2IwNTA5ZWQwOGU5N2ZlOGE3YjYzMjExNzUyOTA1MjBkY2MiLCJ3aWRnZXRzIjoiMjliZWZiYzY0ZTRjZWIwZDJlM2M4MjJjOTI5N2Y0MWIzOWQyZDg4ODhiYWU3ZDNiYzliMGQwZjExNzg5MDk0YyIsIm1vZHVsZV9leHBpcnkiOiIzYTg1YjE3OWJmOThkZDIzOGFmMjk1NTE0ODYzZWMzZGI0ZDk5NzU0ODE3NWJhY2Y1ZmE5OWY4M2FjZDRiYWM5IiwiYXFpX2FuZF91bml0cyI6ImFlNjE1NDNkZmY2NmEzZTU1ZTYxZmI3ODg0YTQ1NmI4ZmY4ZTE0YjY5NzBmYTRlNGUwZjFhNDVjZDZjMjQwYTEifQ==</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-login-3')">View JSON</button>
 <pre id="j-login-3" class="json-box">{
-  "lastUpdatedToken": "eyJvcmciOiJmZGFjM2M4ZmM5MzllMDUwZGE5OGNlYTE3ZDIwNGJmMGViNTU1ZmNjYzUwY2MwZWMxNzljNzQ3Yzc2MGNmNDQ3IiwibWFzdGVyX29yZyI6ImNmODI0NjNlM2ViYjVlZDE5N2E4YTc4YzBkNWE5N2E4MzIyN2ZhYjkzMjMwNmNkZDI1NTkyMTJlOGVlNmFlNmYiLCJjbHVzdGVyIjoiMTYwMGUyMGUxNTg5MDM5ZjM5OWQzZDI3ODZjZWFiMDUyODUzYzlmOWEwOTE4Y2MxOTFmNDllNDA2MjkwMmQ1OCIsImRldmljZV90eXBlcyI6ImE4MjA1NzFlYTk2ZTZjOTljZjkyMzkzZjY5NDA3NzZiNzg1ZDkxZTdmMTkxOWEyNzlkMzIxOWU4ZGRhNGNkN2EiLCJkZXZpY2VzIjoiMzZmZGNmODViZTNkYTRkNWNlYTMxY2UzMTBiMzlkOTIzZTBjZTgwMWRhN2YzYjA2NjFjZjE4MmU3ZTc2MGFmMyIsInByb2ZpbGUiOiJiNDFmNzE4ZGMzNDM5Mzk3Yjc2OTlmN2IzMjAzOTU5NDcxODAwYzRjZmI4NDBlZTc3NDkwNjg3N2RiNjE4M2VhIiwibGF0ZXN0X2ZlYXR1cmVzIjoiOGU1ZTdjN2I5OWIxYTc5ZTlkN2MxM2RmNDk1NzE3NjIwODhlMTk3MTZlNmQ2MWE4ODQ0NDc5MzVkMDBlZWU2ZSIsIndpZGdldHMiOiIyOWJlZmJjNjRlNGNlYjBkMmUzYzgyMmM5Mjk3ZjQxYjM5ZDJkODg4OGJhZTdkM2JjOWIwZDBmMTE3ODkwOTRjIiwiYXFpX2FuZF91bml0cyI6ImFlNjE1NDNkZmY2NmEzZTU1ZTYxZmI3ODg0YTQ1NmI4ZmY4ZTE0YjY5NzBmYTRlNGUwZjFhNDVjZDZjMjQwYTEiLCJjb21wbGFpbl9jYXRlZ29yaWVzIjoiY2Q3MWM3MjVhZTkwYzdiZjgyOWYwNjU5Mzc1NjZiOWYwOTFlNjYzMmNjNTk1MjAyZjI2NDIxYzdlNGNiODYyNyIsIm1vZHVsZXMiOiJjZTgxOTlmNTA1N2FkM2QzNWY3ZDc1YzQ0MWMyZGNiMDUwOWVkMDhlOTdmZThhN2I2MzIxMTc1MjkwNTIwZGNjIiwibW9kdWxlX2V4cGlyeSI6IjNhODViMTc5YmY5OGRkMjM4YWYyOTU1MTQ4NjNlYzNkYjRkOTk3NTQ4MTc1YmFjZjVmYTk5ZjgzYWNkNGJhYzkifQ=="
+  "lastUpdatedToken": "eyJvcmciOiJmZGFjM2M4ZmM5MzllMDUwZGE5OGNlYTE3ZDIwNGJmMGViNTU1ZmNjYzUwY2MwZWMxNzljNzQ3Yzc2MGNmNDQ3IiwibWFzdGVyX29yZyI6ImNmODI0NjNlM2ViYjVlZDE5N2E4YTc4YzBkNWE5N2E4MzIyN2ZhYjkzMjMwNmNkZDI1NTkyMTJlOGVlNmFlNmYiLCJjbHVzdGVyIjoiMTYwMGUyMGUxNTg5MDM5ZjM5OWQzZDI3ODZjZWFiMDUyODUzYzlmOWEwOTE4Y2MxOTFmNDllNDA2MjkwMmQ1OCIsImRldmljZV90eXBlcyI6ImE4MjA1NzFlYTk2ZTZjOTljZjkyMzkzZjY5NDA3NzZiNzg1ZDkxZTdmMTkxOWEyNzlkMzIxOWU4ZGRhNGNkN2EiLCJkZXZpY2VzIjoiMzZmZGNmODViZTNkYTRkNWNlYTMxY2UzMTBiMzlkOTIzZTBjZTgwMWRhN2YzYjA2NjFjZjE4MmU3ZTc2MGFmMyIsInByb2ZpbGUiOiJiNDFmNzE4ZGMzNDM5Mzk3Yjc2OTlmN2IzMjAzOTU5NDcxODAwYzRjZmI4NDBlZTc3NDkwNjg3N2RiNjE4M2VhIiwiY29tcGxhaW5fY2F0ZWdvcmllcyI6ImNkNzFjNzI1YWU5MGM3YmY4MjlmMDY1OTM3NTY2YjlmMDkxZTY2MzJjYzU5NTIwMmYyNjQyMWM3ZTRjYjg2MjciLCJsYXRlc3RfZmVhdHVyZXMiOiI4ZTVlN2M3Yjk5YjFhNzllOWQ3YzEzZGY0OTU3MTc2MjA4OGUxOTcxNmU2ZDYxYTg4NDQ0NzkzNWQwMGVlZTZlIiwibW9kdWxlcyI6ImNlODE5OWY1MDU3YWQzZDM1ZjdkNzVjNDQxYzJkY2IwNTA5ZWQwOGU5N2ZlOGE3YjYzMjExNzUyOTA1MjBkY2MiLCJ3aWRnZXRzIjoiMjliZWZiYzY0ZTRjZWIwZDJlM2M4MjJjOTI5N2Y0MWIzOWQyZDg4ODhiYWU3ZDNiYzliMGQwZjExNzg5MDk0YyIsIm1vZHVsZV9leHBpcnkiOiIzYTg1YjE3OWJmOThkZDIzOGFmMjk1NTE0ODYzZWMzZGI0ZDk5NzU0ODE3NWJhY2Y1ZmE5OWY4M2FjZDRiYWM5IiwiYXFpX2FuZF91bml0cyI6ImFlNjE1NDNkZmY2NmEzZTU1ZTYxZmI3ODg0YTQ1NmI4ZmY4ZTE0YjY5NzBmYTRlNGUwZjFhNDVjZDZjMjQwYTEifQ=="
 }</pre>
 </td>
 </tr>
@@ -167,7 +167,7 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 <tr><th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th></tr>
 
 <tr>
-<td>13/5/2026, 9:48:54 pm</td>
+<td>14/5/2026, 12:57:59 am</td>
 <td>200</td>
 <td>GET</td>
 <td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=582B0A9B89BC0000&deviceIds=A81B6A6A70AA0000&deviceIds=AQ0499001&deviceIds=EADODOUR01&deviceIds=MP14672&deviceIds=MP14682&deviceIds=MP14689&deviceIds=MP14693&deviceIds=MP14694&deviceIds=MP14695&deviceIds=YG19D0003&deviceIds=YG19D0004&deviceIds=YG19D0005&deviceIds=YG19D0006&deviceIds=YG19D0007&deviceIds=YG19D0008&deviceIds=YG19D0010&deviceIds=YG19O0003&deviceIds=YG19O0004&deviceIds=YG19O0005&deviceIds=YG19P0011&deviceIds=YG19P0012&deviceIds=YG19P0013&deviceIds=YG19P0014&deviceIds=YG19P0015&deviceIds=YG19P0016&deviceIds=YG19P0017&deviceIds=YG19P0018&deviceIds=YG19P0019&deviceIds=YG19P0020&deviceIds=YG19P0021&deviceIds=YG19P0022&deviceIds=YG19P0023&deviceIds=YG19P0024&deviceIds=YG19P0025&deviceIds=YG19R0001&deviceIds=YG19R0002&deviceIds=YG19R0003&deviceIds=YG19R0004&deviceIds=YG19R0005&deviceIds=YG19R0006&deviceIds=YG19R0007&deviceIds=YG19W0001&processType=latest&userId=3994</td>
@@ -253,77 +253,13 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 <tr><th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th></tr>
 
 <tr>
-<td>13/5/2026, 9:49:02 pm</td>
-<td>200</td>
-<td>GET</td>
-<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&deviceIds=YG19P0012&deviceIds=YG19P0013&deviceIds=YG19P0014&deviceIds=YG19P0015&deviceIds=YG19P0016&deviceIds=YG19P0017&deviceIds=YG19P0018&deviceIds=YG19P0019&deviceIds=YG19P0020&deviceIds=YG19P0021&deviceIds=YG19P0022&deviceIds=YG19P0023&deviceIds=YG19P0024&deviceIds=YG19P0025&processType=avg&userId=3994&gte=1778599800&lte=1778686200</td>
-<td>
-<button class="json-btn" onclick="toggleJson('j-widget-0')">View JSON</button>
-<pre id="j-widget-0" class="json-box">[
-  {
-    "deviceId": "YG19P0011",
-    "payload": [
-      {
-        "deviceId": "YG19P0011",
-        "deviceType": "POLLUDRON_PRO",
-        "payload": {
-          "t": 1778686199,
-          "d": {
-            "t": 1778686199,
-            "bs": 100,
-            "g2": 772.258888888889,
-            "g3": 23.391875000000013,
-            "g5": 20.648229166666688,
-            "g7": 6.389270833333326,
-            "g8": 6.671076388888887,
-            "hum": 63.39770833333341,
-            "leq": 85.13541666666667,
-            "lmax": 99.82638888888889,
-            "lmin": 65.01736111111111,
-            "p1": 45.561094888888846,
-            "p2": 100.93934027777777,
-            "rain": 2.890000000000001,
-            "temp": 30.62635416666669,
-            "ws": 1.940524923466805,
-            "wd": 225.59223794075902
-          },
-          "s": {
-            "loc": "baroda",
-            "lat": "23.019231085492375",
-            "lon": "72.53054399593834",
-            "DEVELOPER": "TEST"
-          }
-        }
-      }
-    ]
-  },
-  {
-    "deviceId": "YG19P0012",
-    "payload": [
-      {
-        "deviceId": "YG19P0012",
-        "deviceType": "POLLUDRON_PRO",
-        "payload": {
-          "t": 1778686199,
-          "d": {
-            "t": 1778686199,
-            "bs": 100,
-            "g2": 778.1476223776222,
-            "g3": 14.240419580419584,
-            "g5": 17.928741258741216,
-            "g7": 3.8976573426573426,
-            "g8": 6.486783216783227,
-            "hum": 59.0238461538461</pre>
-</td>
-</tr>
-<tr>
-<td>13/5/2026, 9:49:02 pm</td>
+<td>14/5/2026, 12:58:07 am</td>
 <td>200</td>
 <td>GET</td>
 <td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=582B0A9B89BC0000&deviceIds=A81B6A6A70AA0000&deviceIds=AQ0499001&deviceIds=EADODOUR01&deviceIds=MP14672&deviceIds=MP14682&deviceIds=MP14689&deviceIds=MP14693&deviceIds=MP14694&deviceIds=MP14695&deviceIds=YG19D0003&deviceIds=YG19D0004&deviceIds=YG19D0005&deviceIds=YG19D0006&deviceIds=YG19D0007&deviceIds=YG19D0008&deviceIds=YG19D0010&deviceIds=YG19O0003&deviceIds=YG19O0004&deviceIds=YG19O0005&deviceIds=YG19P0011&deviceIds=YG19P0012&deviceIds=YG19P0013&deviceIds=YG19P0014&deviceIds=YG19P0015&deviceIds=YG19P0016&deviceIds=YG19P0017&deviceIds=YG19P0018&deviceIds=YG19P0019&deviceIds=YG19P0020&deviceIds=YG19P0021&deviceIds=YG19P0022&deviceIds=YG19P0023&deviceIds=YG19P0024&deviceIds=YG19P0025&deviceIds=YG19R0001&deviceIds=YG19R0002&deviceIds=YG19R0003&deviceIds=YG19R0004&deviceIds=YG19R0005&deviceIds=YG19R0006&deviceIds=YG19R0007&deviceIds=YG19W0001&processType=latest&userId=3994</td>
 <td>
-<button class="json-btn" onclick="toggleJson('j-widget-1')">View JSON</button>
-<pre id="j-widget-1" class="json-box">[
+<button class="json-btn" onclick="toggleJson('j-widget-0')">View JSON</button>
+<pre id="j-widget-0" class="json-box">[
   {
     "deviceId": "582B0A9B89BC0000",
     "payload": [
@@ -398,70 +334,135 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:02 pm</td>
-<td>200</td>
+<td>14/5/2026, 12:58:07 am</td>
+<td>404</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/devices/YG19P0011/predict?deviceId=YG19P0011&userId=3994&gte=1778686200&lte=1778772600</td>
+<td class="url">https://envdevapi.oizom.com/device/uptime/YG19P0011?gte=1778095685&lte=1778700485&time_groupby=1800</td>
 <td>
-<button class="json-btn" onclick="toggleJson('j-widget-2')">View JSON</button>
-<pre id="j-widget-2" class="json-box">[]</pre>
+<button class="json-btn" onclick="toggleJson('j-widget-1')">View JSON</button>
+<pre id="j-widget-1" class="json-box"></pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:02 pm</td>
-<td>200</td>
+<td>14/5/2026, 12:58:07 am</td>
+<td>404</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/real-time/users/3994/device-r-data/YG19P0011/vibration?token=eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiMDhiMGQ1OGQtMWRkNC00OTJmLTg3NTQtN2E2N2RjNjZiNGM2IiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg2ODkxMTgsImV4cCI6MTc3OTI5MzkxOH0.bUeaAi5BkO5dEtMkp8KF4nIJTenhabPpdwCuH5qlZO0</td>
+<td class="url">https://envdevapi.oizom.com/device/getnetworkinterface/YG19P0011?gte=1778614085&lte=1778700485&time_groupby=3600</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-2')">View JSON</button>
+<pre id="j-widget-2" class="json-box"></pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:07 am</td>
+<td>404</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/device/getnetworkinterface/YG19P0011?gte=1778610600&lte=1778697000&time_groupby=3600</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-3')">View JSON</button>
 <pre id="j-widget-3" class="json-box"></pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:02 pm</td>
+<td>14/5/2026, 12:58:11 am</td>
 <td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/real-time/users/3994/device-r-data/YG19P0011/noise?token=eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiMDhiMGQ1OGQtMWRkNC00OTJmLTg3NTQtN2E2N2RjNjZiNGM2IiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg2ODkxMTgsImV4cCI6MTc3OTI5MzkxOH0.bUeaAi5BkO5dEtMkp8KF4nIJTenhabPpdwCuH5qlZO0</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&deviceIds=YG19P0012&deviceIds=YG19P0013&deviceIds=YG19P0014&deviceIds=YG19P0015&deviceIds=YG19P0016&deviceIds=YG19P0017&deviceIds=YG19P0018&deviceIds=YG19P0019&deviceIds=YG19P0020&deviceIds=YG19P0021&deviceIds=YG19P0022&deviceIds=YG19P0023&deviceIds=YG19P0024&deviceIds=YG19P0025&processType=avg&userId=3994&gte=1778610600&lte=1778697000</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-4')">View JSON</button>
-<pre id="j-widget-4" class="json-box"></pre>
+<pre id="j-widget-4" class="json-box">[
+  {
+    "deviceId": "YG19P0011",
+    "payload": [
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778696999,
+          "d": {
+            "t": 1778696999,
+            "bs": 100,
+            "g2": 905.9625000000005,
+            "g3": 22.150763888888882,
+            "g5": 20.65937500000002,
+            "g7": 7.466701388888885,
+            "g8": 6.604999999999994,
+            "hum": 64.66965277777783,
+            "leq": 85.02777777777777,
+            "lmax": 99.89583333333333,
+            "lmin": 65.04861111111111,
+            "p1": 45.28741433333334,
+            "p2": 98.27475694444446,
+            "rain": 2.850000000000001,
+            "temp": 30.90145833333334,
+            "ws": 2.546488013459479,
+            "wd": 213.2297711393755
+          },
+          "s": {
+            "loc": "baroda",
+            "lat": "23.019231085492375",
+            "lon": "72.53054399593834",
+            "DEVELOPER": "TEST"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "deviceId": "YG19P0012",
+    "payload": [
+      {
+        "deviceId": "YG19P0012",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778696999,
+          "d": {
+            "t": 1778696999,
+            "bs": 100,
+            "g2": 678.3824825174822,
+            "g3": 13.235734265734267,
+            "g5": 17.993461538461474,
+            "g7": 3.9024475524475504,
+            "g8": 5.72437062937064,
+            "hum": 63.08604895104894,
+ </pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:03 pm</td>
-<td>404</td>
+<td>14/5/2026, 12:58:11 am</td>
+<td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/device/uptime/YG19P0011?gte=1778084342&lte=1778689142&time_groupby=1800</td>
+<td class="url">https://envdevapi.oizom.com/devices/YG19P0011/predict?deviceId=YG19P0011&userId=3994&gte=1778697000&lte=1778783400</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-5')">View JSON</button>
-<pre id="j-widget-5" class="json-box"></pre>
+<pre id="j-widget-5" class="json-box">[]</pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:03 pm</td>
-<td>404</td>
+<td>14/5/2026, 12:58:11 am</td>
+<td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/device/getnetworkinterface/YG19P0011?gte=1778599800&lte=1778686200&time_groupby=3600</td>
+<td class="url">https://envdevapi.oizom.com/real-time/users/3994/device-r-data/YG19P0011/noise?token=eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiOTQ1NWUzMTQtMmQwYS00NTRhLWE3MWQtYjEzMjEwMzcwOWEyIiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg3MDA0NjIsImV4cCI6MTc3OTMwNTI2Mn0.p0Gp8F1Y5rF0T6z55wXfl2FDPwZrBrTwETsxn7HDhRE</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-6')">View JSON</button>
 <pre id="j-widget-6" class="json-box"></pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:03 pm</td>
-<td>404</td>
+<td>14/5/2026, 12:58:11 am</td>
+<td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/device/getnetworkinterface/YG19P0011?gte=1778602742&lte=1778689142&time_groupby=3600</td>
+<td class="url">https://envdevapi.oizom.com/real-time/users/3994/device-r-data/YG19P0011/vibration?token=eyJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoid2ViIiwidXNlcklkIjozOTk0LCJvcmdJZCI6IndlYnFjIiwidXNlckVtYWlsIjoid2VicWNAb2l6b20uY29tIiwicm9sZSI6MSwiaGFzQWRtaW5BY2Nlc3MiOmZhbHNlLCJpc1RvcE9yZyI6ZmFsc2UsImlkIjoiOTQ1NWUzMTQtMmQwYS00NTRhLWE3MWQtYjEzMjEwMzcwOWEyIiwidmVyc2lvbiI6IjIiLCJpc3MiOiJkZXZfdGVybWluYWw6b2l6b21faW5zdHJ1bWVudHMiLCJpYXQiOjE3Nzg3MDA0NjIsImV4cCI6MTc3OTMwNTI2Mn0.p0Gp8F1Y5rF0T6z55wXfl2FDPwZrBrTwETsxn7HDhRE</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-7')">View JSON</button>
 <pre id="j-widget-7" class="json-box"></pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:05 pm</td>
+<td>14/5/2026, 12:58:11 am</td>
 <td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=avg&userId=3994&gte=1778599800&lte=1778686200&avg=3600</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=avg&userId=3994&gte=1778610600&lte=1778697000&avg=3600</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-8')">View JSON</button>
 <pre id="j-widget-8" class="json-box">[
@@ -472,25 +473,24 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
         "deviceId": "YG19P0011",
         "deviceType": "POLLUDRON_PRO",
         "payload": {
-          "t": 1778686200,
+          "t": 1778697000,
           "d": {
-            "t": 1778686200,
+            "t": 1778697000,
             "bs": 100,
-            "g2": 791.1216666666668,
-            "g3": 30.485833333333332,
-            "g5": 12.230000000000002,
-            "g7": 5.306666666666667,
-            "g8": 2.5308333333333333,
-            "hum": 56.66166666666666,
-            "leq": 85.41666666666667,
-            "lmax": 100.5,
-            "lmin": 63.666666666666664,
-            "p1": 59.64178933333333,
-            "p2": 120.00166666666667,
-            "rain": 0.060000000000000005,
-            "temp": 31.38,
-            "ws": 4.12,
-            "wd": 139.99999999999997
+            "g2": 2100.44,
+            "g3": 44.7475,
+            "g5": 1.5875000000000001,
+            "g7": 23.88416666666667,
+            "g8": 4.416666666666667,
+            "hum": 66.78250000000001,
+            "leq": 84.83333333333333,
+            "lmax": 100.75,
+            "lmin": 64.75,
+            "p1": 69.915956,
+            "p2": 91.37250000000002,
+            "temp": 28.430000000000003,
+            "ws": 6.170000000000001,
+            "wd": 180
           },
           "s": {
             "loc": "baroda",
@@ -504,99 +504,51 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
         "deviceId": "YG19P0011",
         "deviceType": "POLLUDRON_PRO",
         "payload": {
-          "t": 1778682600,
+          "t": 1778693400,
           "d": {
-            "t": 1778682600,
+            "t": 1778693400,
             "bs": 100,
-            "g2": 943.2308333333335,
-            "g3": 32.24499999999999,
-            "g5": 25.61583333333333,
-            "g7": 4.913333333333333,
-            "g8": 6.314999999999999,
-            "hum": 56.189166666666665,
-            "leq": 83.25,
-            "lmax": 99.08333333333333,
-            "lmin": 64.333</pre>
+            "g2": 2002.913333333333,
+            "g3": 45.01500000000001,
+            "g5": 1.3933333333333333,
+            "g7": 17.729166666666668,
+            "g8": 2.6225000000000005,
+            "hum": 70.96416666666667,
+            "leq": 84.08333333333333,
+            "lmax": 99.25,
+            "lmin": 64.83333333333333,
+            "p1": 53.738456000000006,
+            "p2": 93.</pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:08 pm</td>
-<td>200</td>
+<td>14/5/2026, 12:58:12 am</td>
+<td>500</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=raw&userId=3994&gte=1778602741&lte=1778689141</td>
+<td class="url">https://envdevapi.oizom.com/devices/YG19P0011/insights?deviceId=YG19P0011&userId=3994&gte=1778610600&lte=1778697000&mode=historical</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-9')">View JSON</button>
-<pre id="j-widget-9" class="json-box">[
-  {
-    "deviceId": "YG19P0011",
-    "payload": [
-      {
-        "deviceId": "YG19P0011",
-        "deviceType": "POLLUDRON_PRO",
-        "payload": {
-          "t": 1778688900,
-          "d": {
-            "t": 1778688900,
-            "bs": 100,
-            "g2": 1248.91,
-            "g3": 28.03,
-            "g5": 8.9,
-            "g7": 7.5,
-            "g8": 8.4,
-            "hum": 64.69,
-            "leq": 88,
-            "lmax": 96,
-            "lmin": 66,
-            "ow_clouds": 0,
-            "ow_feeltemp": 36.79,
-            "ow_hum": 38,
-            "ow_maxtemp": 35.09,
-            "ow_mintemp": 35.09,
-            "ow_pr": 1002,
-            "ow_prgrndlevel": 997,
-            "ow_prsealevel": 1002,
-            "ow_t": 1778688317,
-            "ow_temp": 35.09,
-            "ow_vis": 4000,
-            "ow_wd": 190,
-            "ow_ws": 7.2,
-            "p1": 55.833456,
-            "p2": 97.76,
-            "temp": 30.77,
-            "wd": 190,
-            "ws": 7.2
-          },
-          "s": {
-            "loc": "baroda",
-            "lat": "23.019231085492375",
-            "lon": "72.53054399593834",
-            "DEVELOPER": "TEST"
-          }
-        }
-      },
-      {
-        "deviceId": "YG19P0011",
-        "deviceType": "POLLUDRON_PRO",
-        "payload": {
-          "t": 1778688600,
-          "d": {
-            "t": 1778688600,
-            "bs": 100,
-            "g2": 951.97,
-            "g3": 28.23,
-            "g5": 9.54,
-            "g7": 7.07,
-            "g8</pre>
+<pre id="j-widget-9" class="json-box"></pre>
 </td>
 </tr>
 <tr>
-<td>13/5/2026, 9:49:08 pm</td>
-<td>200</td>
+<td>14/5/2026, 12:58:12 am</td>
+<td>500</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=raw&userId=3994&gte=1778681941&lte=1778689141</td>
+<td class="url">https://envdevapi.oizom.com/devices/YG19P0011/insights?deviceId=YG19P0011&userId=3994&gte=1778697000&lte=1778783400&mode=predict</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-widget-10')">View JSON</button>
-<pre id="j-widget-10" class="json-box">[
+<pre id="j-widget-10" class="json-box"></pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:14 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=raw&userId=3994&gte=1778614084&lte=1778700484</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-11')">View JSON</button>
+<pre id="j-widget-11" class="json-box">[
   {
     "deviceId": "YG19P0011",
     "payload": [
@@ -604,37 +556,37 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
         "deviceId": "YG19P0011",
         "deviceType": "POLLUDRON_PRO",
         "payload": {
-          "t": 1778688900,
+          "t": 1778700300,
           "d": {
-            "t": 1778688900,
+            "t": 1778700300,
             "bs": 100,
-            "g2": 1248.91,
-            "g3": 28.03,
-            "g5": 8.9,
-            "g7": 7.5,
-            "g8": 8.4,
-            "hum": 64.69,
+            "g2": 227.07,
+            "g3": 26.22,
+            "g5": 1.8,
+            "g7": 9.23,
+            "g8": 17.93,
+            "hum": 65.3,
             "leq": 88,
-            "lmax": 96,
-            "lmin": 66,
+            "lmax": 102,
+            "lmin": 68,
             "ow_clouds": 0,
-            "ow_feeltemp": 36.79,
-            "ow_hum": 38,
-            "ow_maxtemp": 35.09,
-            "ow_mintemp": 35.09,
+            "ow_feeltemp": 34.05,
+            "ow_hum": 48,
+            "ow_maxtemp": 32.09,
+            "ow_mintemp": 32.09,
             "ow_pr": 1002,
             "ow_prgrndlevel": 997,
             "ow_prsealevel": 1002,
-            "ow_t": 1778688317,
-            "ow_temp": 35.09,
+            "ow_t": 1778699402,
+            "ow_temp": 32.09,
             "ow_vis": 4000,
             "ow_wd": 190,
-            "ow_ws": 7.2,
-            "p1": 55.833456,
-            "p2": 97.76,
-            "temp": 30.77,
+            "ow_ws": 2.57,
+            "p1": 79.973456,
+            "p2": 116.59,
+            "temp": 28.53,
             "wd": 190,
-            "ws": 7.2
+            "ws": 4.63
           },
           "s": {
             "loc": "baroda",
@@ -648,15 +600,500 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
         "deviceId": "YG19P0011",
         "deviceType": "POLLUDRON_PRO",
         "payload": {
-          "t": 1778688600,
+          "t": 1778700000,
           "d": {
-            "t": 1778688600,
+            "t": 1778700000,
             "bs": 100,
-            "g2": 951.97,
-            "g3": 28.23,
-            "g5": 9.54,
-            "g7": 7.07,
-            "g8</pre>
+            "g2": 244.54,
+            "g3": 29.14,
+            "g5": 1.79,
+            "g7": 11.52,
+         </pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:14 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=raw&userId=3994&gte=1778693285&lte=1778700485</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-12')">View JSON</button>
+<pre id="j-widget-12" class="json-box">[
+  {
+    "deviceId": "YG19P0011",
+    "payload": [
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778700300,
+          "d": {
+            "t": 1778700300,
+            "bs": 100,
+            "g2": 227.07,
+            "g3": 26.22,
+            "g5": 1.8,
+            "g7": 9.23,
+            "g8": 17.93,
+            "hum": 65.3,
+            "leq": 88,
+            "lmax": 102,
+            "lmin": 68,
+            "ow_clouds": 0,
+            "ow_feeltemp": 34.05,
+            "ow_hum": 48,
+            "ow_maxtemp": 32.09,
+            "ow_mintemp": 32.09,
+            "ow_pr": 1002,
+            "ow_prgrndlevel": 997,
+            "ow_prsealevel": 1002,
+            "ow_t": 1778699402,
+            "ow_temp": 32.09,
+            "ow_vis": 4000,
+            "ow_wd": 190,
+            "ow_ws": 2.57,
+            "p1": 79.973456,
+            "p2": 116.59,
+            "temp": 28.53,
+            "wd": 190,
+            "ws": 4.63
+          },
+          "s": {
+            "loc": "baroda",
+            "lat": "23.019231085492375",
+            "lon": "72.53054399593834",
+            "DEVELOPER": "TEST"
+          }
+        }
+      },
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778700000,
+          "d": {
+            "t": 1778700000,
+            "bs": 100,
+            "g2": 244.54,
+            "g3": 29.14,
+            "g5": 1.79,
+            "g7": 11.52,
+         </pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:15 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=avg&userId=3994&gte=1778178600&lte=1778697000&avg=3600</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-13')">View JSON</button>
+<pre id="j-widget-13" class="json-box">[
+  {
+    "deviceId": "YG19P0011",
+    "payload": [
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778697000,
+          "d": {
+            "t": 1778697000,
+            "bs": 100,
+            "g2": 2100.44,
+            "g3": 44.7475,
+            "g5": 1.5875000000000001,
+            "g7": 23.88416666666667,
+            "g8": 4.416666666666667,
+            "hum": 66.78250000000001,
+            "leq": 84.83333333333333,
+            "lmax": 100.75,
+            "lmin": 64.75,
+            "p1": 69.915956,
+            "p2": 91.37250000000002,
+            "temp": 28.430000000000003,
+            "ws": 6.170000000000001,
+            "wd": 180
+          },
+          "s": {
+            "loc": "baroda",
+            "lat": "23.019231085492375",
+            "lon": "72.53054399593834",
+            "DEVELOPER": "TEST"
+          }
+        }
+      },
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778693400,
+          "d": {
+            "t": 1778693400,
+            "bs": 100,
+            "g2": 2002.913333333333,
+            "g3": 45.01500000000001,
+            "g5": 1.3933333333333333,
+            "g7": 17.729166666666668,
+            "g8": 2.6225000000000005,
+            "hum": 70.96416666666667,
+            "leq": 84.08333333333333,
+            "lmax": 99.25,
+            "lmin": 64.83333333333333,
+            "p1": 53.738456000000006,
+            "p2": 93.</pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:15 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=avg&userId=3994&gte=1778610600&lte=1778697000&avg=3600</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-14')">View JSON</button>
+<pre id="j-widget-14" class="json-box">[
+  {
+    "deviceId": "YG19P0011",
+    "payload": [
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778697000,
+          "d": {
+            "t": 1778697000,
+            "bs": 100,
+            "g2": 2100.44,
+            "g3": 44.7475,
+            "g5": 1.5875000000000001,
+            "g7": 23.88416666666667,
+            "g8": 4.416666666666667,
+            "hum": 66.78250000000001,
+            "leq": 84.83333333333333,
+            "lmax": 100.75,
+            "lmin": 64.75,
+            "p1": 69.915956,
+            "p2": 91.37250000000002,
+            "temp": 28.430000000000003,
+            "ws": 6.170000000000001,
+            "wd": 180
+          },
+          "s": {
+            "loc": "baroda",
+            "lat": "23.019231085492375",
+            "lon": "72.53054399593834",
+            "DEVELOPER": "TEST"
+          }
+        }
+      },
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778693400,
+          "d": {
+            "t": 1778693400,
+            "bs": 100,
+            "g2": 2002.913333333333,
+            "g3": 45.01500000000001,
+            "g5": 1.3933333333333333,
+            "g7": 17.729166666666668,
+            "g8": 2.6225000000000005,
+            "hum": 70.96416666666667,
+            "leq": 84.08333333333333,
+            "lmax": 99.25,
+            "lmin": 64.83333333333333,
+            "p1": 53.738456000000006,
+            "p2": 93.</pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:17 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=avg&userId=3994&gte=1778610600&lte=1778697000&avg=3600</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-15')">View JSON</button>
+<pre id="j-widget-15" class="json-box">[
+  {
+    "deviceId": "YG19P0011",
+    "payload": [
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778697000,
+          "d": {
+            "t": 1778697000,
+            "bs": 100,
+            "g2": 2100.44,
+            "g3": 44.7475,
+            "g5": 1.5875000000000001,
+            "g7": 23.88416666666667,
+            "g8": 4.416666666666667,
+            "hum": 66.78250000000001,
+            "leq": 84.83333333333333,
+            "lmax": 100.75,
+            "lmin": 64.75,
+            "p1": 69.915956,
+            "p2": 91.37250000000002,
+            "temp": 28.430000000000003,
+            "ws": 6.170000000000001,
+            "wd": 180
+          },
+          "s": {
+            "loc": "baroda",
+            "lat": "23.019231085492375",
+            "lon": "72.53054399593834",
+            "DEVELOPER": "TEST"
+          }
+        }
+      },
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778693400,
+          "d": {
+            "t": 1778693400,
+            "bs": 100,
+            "g2": 2002.913333333333,
+            "g3": 45.01500000000001,
+            "g5": 1.3933333333333333,
+            "g7": 17.729166666666668,
+            "g8": 2.6225000000000005,
+            "hum": 70.96416666666667,
+            "leq": 84.08333333333333,
+            "lmax": 99.25,
+            "lmin": 64.83333333333333,
+            "p1": 53.738456000000006,
+            "p2": 93.</pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:17 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0011&processType=avg&userId=3994&gte=1778610600&lte=1778697000&avg=3600</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-16')">View JSON</button>
+<pre id="j-widget-16" class="json-box">[
+  {
+    "deviceId": "YG19P0011",
+    "payload": [
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778697000,
+          "d": {
+            "t": 1778697000,
+            "bs": 100,
+            "g2": 2100.44,
+            "g3": 44.7475,
+            "g5": 1.5875000000000001,
+            "g7": 23.88416666666667,
+            "g8": 4.416666666666667,
+            "hum": 66.78250000000001,
+            "leq": 84.83333333333333,
+            "lmax": 100.75,
+            "lmin": 64.75,
+            "p1": 69.915956,
+            "p2": 91.37250000000002,
+            "temp": 28.430000000000003,
+            "ws": 6.170000000000001,
+            "wd": 180
+          },
+          "s": {
+            "loc": "baroda",
+            "lat": "23.019231085492375",
+            "lon": "72.53054399593834",
+            "DEVELOPER": "TEST"
+          }
+        }
+      },
+      {
+        "deviceId": "YG19P0011",
+        "deviceType": "POLLUDRON_PRO",
+        "payload": {
+          "t": 1778693400,
+          "d": {
+            "t": 1778693400,
+            "bs": 100,
+            "g2": 2002.913333333333,
+            "g3": 45.01500000000001,
+            "g5": 1.3933333333333333,
+            "g7": 17.729166666666668,
+            "g8": 2.6225000000000005,
+            "hum": 70.96416666666667,
+            "leq": 84.08333333333333,
+            "lmax": 99.25,
+            "lmin": 64.83333333333333,
+            "p1": 53.738456000000006,
+            "p2": 93.</pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:21 am</td>
+<td>500</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/YG19P0011/insights?deviceId=YG19P0011&userId=3994&gte=1778697000&lte=1778783400&mode=predict</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-17')">View JSON</button>
+<pre id="j-widget-17" class="json-box"></pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:21 am</td>
+<td>500</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/YG19P0011/insights?deviceId=YG19P0011&userId=3994&gte=1778610600&lte=1778697000&mode=historical</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-18')">View JSON</button>
+<pre id="j-widget-18" class="json-box"></pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:21 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/YG19O0003/predict?deviceId=YG19O0003&userId=3994&gte=1778697000&lte=1778783400</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-19')">View JSON</button>
+<pre id="j-widget-19" class="json-box">[]</pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:24 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19O0003&processType=raw&userId=3994&gte=1778614100&lte=1778700500</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-20')">View JSON</button>
+<pre id="j-widget-20" class="json-box">[
+  {
+    "deviceId": "YG19O0003",
+    "payload": [
+      {
+        "deviceId": "YG19O0003",
+        "deviceType": "ODOSENSE",
+        "payload": {
+          "t": 1778700300,
+          "d": {
+            "t": 1778700300,
+            "bs": 100,
+            "g3": 21.66,
+            "g6": 77.72,
+            "g8": 1.01,
+            "hum": 54.18,
+            "lat": 23.073544835660627,
+            "leq": 57.91,
+            "light": 2.8,
+            "lmax": 66.5,
+            "lmin": 48.1,
+            "lon": 72.68070180691593,
+            "ow_clouds": 0,
+            "ow_feeltemp": 34.05,
+            "ow_hum": 48,
+            "ow_maxtemp": 32.09,
+            "ow_mintemp": 32.09,
+            "ow_pr": 1002,
+            "ow_prgrndlevel": 997,
+            "ow_prsealevel": 1002,
+            "ow_t": 1778699402,
+            "ow_temp": 32.09,
+            "ow_vis": 4000,
+            "ow_wd": 190,
+            "ow_ws": 2.57,
+            "p1": 15.103456,
+            "p2": 28.07,
+            "temp": 25.59,
+            "wd": 190,
+            "ws": 4.63
+          },
+          "s": {
+            "loc": "Ahmedabad",
+            "lat": "22.98248",
+            "lon": "72.56639"
+          }
+        }
+      },
+      {
+        "deviceId": "YG19O0003",
+        "deviceType": "ODOSENSE",
+        "payload": {
+          "t": 1778700000,
+          "d": {
+            "t": 1778700000,
+            "bs": 100,
+            "g3": 25.35,
+            "g6": 73.04,
+            "g8": 0.62,
+            "hum": 54.19,
+        </pre>
+</td>
+</tr>
+<tr>
+<td>14/5/2026, 12:58:26 am</td>
+<td>200</td>
+<td>GET</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19O0003&processType=avg&userId=3994&gte=1778610600&lte=1778697000&avg=3600</td>
+<td>
+<button class="json-btn" onclick="toggleJson('j-widget-21')">View JSON</button>
+<pre id="j-widget-21" class="json-box">[
+  {
+    "deviceId": "YG19O0003",
+    "payload": [
+      {
+        "deviceId": "YG19O0003",
+        "deviceType": "ODOSENSE",
+        "payload": {
+          "t": 1778697000,
+          "d": {
+            "t": 1778697000,
+            "bs": 100,
+            "g3": 46.60166666666667,
+            "g6": 70.38250000000001,
+            "g8": 4.822499999999999,
+            "hum": 49.22666666666667,
+            "lat": 23.07269628452389,
+            "leq": 61.56333333333333,
+            "light": 2.6,
+            "lmax": 70.88333333333334,
+            "lmin": 51.89166666666667,
+            "lon": 72.68004285672924,
+            "p1": 17.673456,
+            "p2": 31.314166666666665,
+            "temp": 25.069166666666664,
+            "ws": 6.170000000000001,
+            "wd": 180
+          },
+          "s": {
+            "loc": "Ahmedabad",
+            "lat": "22.98248",
+            "lon": "72.56639"
+          }
+        }
+      },
+      {
+        "deviceId": "YG19O0003",
+        "deviceType": "ODOSENSE",
+        "payload": {
+          "t": 1778693400,
+          "d": {
+            "t": 1778693400,
+            "bs": 100,
+            "g3": 45.17916666666665,
+            "g6": 77.3975,
+            "g8": 7.919999999999999,
+            "hum": 50.08166666666667,
+            "lat": 23.072630096628803,
+            "leq": 59.9575,
+            "light": 2.3333333333333335,
+            "lmax": 68.04166666666667,
+            "lmin": 51.66666666666668,
+            "lon": 72.67988105532905,
+            "p</pre>
 </td>
 </tr>
 </table></div>
@@ -665,65 +1102,66 @@ th,td{border:1px solid #374151;padding:6px;font-size:12px}
 <tr><th>Time</th><th>Status</th><th>Method</th><th>URL</th><th>Response</th></tr>
 
 <tr>
-<td>13/5/2026, 9:49:12 pm</td>
+<td>14/5/2026, 12:58:27 am</td>
 <td>200</td>
 <td>GET</td>
-<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19P0013&processType=avg&userId=3994&gte=1778599800&lte=1778686200&avg=3600</td>
+<td class="url">https://envdevapi.oizom.com/devices/data?deviceIds=YG19O0003&processType=avg&userId=3994&gte=1778610600&lte=1778697000&avg=3600</td>
 <td>
 <button class="json-btn" onclick="toggleJson('j-table-0')">View JSON</button>
 <pre id="j-table-0" class="json-box">[
   {
-    "deviceId": "YG19P0013",
+    "deviceId": "YG19O0003",
     "payload": [
       {
-        "deviceId": "YG19P0013",
-        "deviceType": "POLLUDRON_PRO",
+        "deviceId": "YG19O0003",
+        "deviceType": "ODOSENSE",
         "payload": {
-          "t": 1778686200,
+          "t": 1778697000,
           "d": {
-            "t": 1778686200,
+            "t": 1778697000,
             "bs": 100,
-            "g2": 3696.5074999999997,
-            "g3": 84.67500000000003,
-            "g5": 1.2975000000000003,
-            "g7": 72.6975,
-            "g8": 8.450833333333334,
-            "hum": 57.29250000000001,
-            "p1": 85.21345600000001,
-            "p2": 285.22166666666664,
-            "temp": 31.75083333333333,
-            "ws": 4.12,
-            "wd": 139.99999999999997
+            "g3": 46.60166666666667,
+            "g6": 70.38250000000001,
+            "g8": 4.822499999999999,
+            "hum": 49.22666666666667,
+            "lat": 23.07269628452389,
+            "leq": 61.56333333333333,
+            "light": 2.6,
+            "lmax": 70.88333333333334,
+            "lmin": 51.89166666666667,
+            "lon": 72.68004285672924,
+            "p1": 17.673456,
+            "p2": 31.314166666666665,
+            "temp": 25.069166666666664,
+            "ws": 6.170000000000001,
+            "wd": 180
           },
           "s": {
-            "loc": "2H78 2R5, Paldi Rd, Paldi Gaam, Paldi, Ahmedabad, Gujarat 380007, India",
-            "lat": "23.012476352460418",
-            "lon": "72.56693648503277"
+            "loc": "Ahmedabad",
+            "lat": "22.98248",
+            "lon": "72.56639"
           }
         }
       },
       {
-        "deviceId": "YG19P0013",
-        "deviceType": "POLLUDRON_PRO",
+        "deviceId": "YG19O0003",
+        "deviceType": "ODOSENSE",
         "payload": {
-          "t": 1778682600,
+          "t": 1778693400,
           "d": {
-            "t": 1778682600,
+            "t": 1778693400,
             "bs": 100,
-            "g2": 3195.0508333333332,
-            "g3": 84.91916666666667,
-            "g5": 1.4749999999999996,
-            "g7": 55.39583333333334,
-            "g8": 8.305833333333334,
-            "hum": 56.74,
-            "p1": 65.14928933333333,
-            "p2": 156.61,
-            "temp": 33.255,
-            "ws": 3.6,
-            "wd": 160
-          },
-          "s": {
-            "loc": "2H78 2R5, Paldi Rd, Paldi Gaam</pre>
+            "g3": 45.17916666666665,
+            "g6": 77.3975,
+            "g8": 7.919999999999999,
+            "hum": 50.08166666666667,
+            "lat": 23.072630096628803,
+            "leq": 59.9575,
+            "light": 2.3333333333333335,
+            "lmax": 68.04166666666667,
+            "lmin": 51.66666666666668,
+            "lon": 72.67988105532905,
+            "p</pre>
 </td>
 </tr>
 </table></div>
